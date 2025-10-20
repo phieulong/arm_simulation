@@ -1,0 +1,295 @@
+import json
+
+from controller import Supervisor
+import requests
+import redis
+import threading
+import time
+from flask import Flask
+
+# --- Cấu hình bản đồ ---
+API_URL = "http://localhost:6060/map"
+
+# Khởi tạo Supervisor
+root_supervisor = Supervisor()
+
+# Cache cho map data
+cached_map = None
+cache_timestamp = 0
+CACHE_DURATION = 100000  # Cache trong 1 giây
+cache_lock = threading.Lock()
+
+# Redis client
+redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0)
+
+# Flask app
+app = Flask(__name__)
+
+
+def get_node_size(node):
+    """Lấy kích thước của node dựa trên type"""
+    try:
+        node_type = node.getTypeName()
+        if node_type in ["ConveyorBelt", "WoodenPallet"]:
+            return node.getField("size").getSFVec3f()
+        elif node_type == 'WoodenPalletStack':
+            return node.getField("palletSize").getSFVec3f()
+        elif node_type == 'CardboardBox':
+            # Giả sử CardboardBox có field "size"
+            size_field = node.getField("size")
+            if size_field:
+                return size_field.getSFVec3f()
+    except Exception as e:
+        print(f"Error getting node size for {node_type}: {e}")
+    return [0, 0, 0]
+
+
+def calculate_bbox(translation, size):
+    """Tính toán bounding box từ translation và size"""
+    bx, by = translation[0], translation[1]
+    bl, bw = size[0], size[1]
+
+    return [
+        [bx - bl / 2, by - bw / 2],  # bottom-left
+        [bx - bl / 2, by + bw / 2],  # top-left
+        [bx + bl / 2, by - bw / 2],  # bottom-right
+        [bx + bl / 2, by + bw / 2],  # top-right
+    ]
+
+def publish_obstacles(supervisor = root_supervisor):
+    """Lấy thông tin arena và obstacles"""
+    try:
+        # supervisor.simulationResetPhysics()
+        # supervisor.step(0)  # Đảm bảo supervisor cập nhật trạng thái
+        # --- Arena ---
+        arena = supervisor.getFromDef("rectangle_arena")
+        if not arena:
+            print("Warning: rectangle_arena not found")
+            return None
+
+        arena_size = arena.getField("floorSize").getSFVec2f()
+        w, h = arena_size[0], arena_size[1]
+
+        # --- Lấy tất cả obstacles ---
+        target_types = {"CardboardBox"}
+        obstacles = []
+
+        root = supervisor.getRoot()
+        children_field = root.getField("children")
+        n = children_field.getCount()
+
+        obstacle_id = 1
+        for i in range(n):
+            try:
+                node = children_field.getMFNode(i)
+                if node and node.getTypeName() in target_types:
+                    # Lấy size và translation
+                    belt_size = get_node_size(node)
+                    belt_translation = node.getField("translation").getSFVec3f()
+                    # Tạo obstacle object
+                    obstacles.append({
+                        "id": str(obstacle_id),
+                        "type": node.getTypeName(),
+                        "center": [belt_translation[0], belt_translation[1]],
+                        "bbox": calculate_bbox(belt_translation, belt_size)
+                    })
+                    obstacle_id += 1
+
+            except Exception as e:
+                print(f"Error processing node {i}: {e}")
+                continue
+        message = json.dumps({"obstacles": obstacles})
+        redis_client.publish("obstacles", message)
+    except Exception as e:
+        print(f"Error getting arena and obstacles: {e}")
+        return None
+
+
+def get_map(supervisor = root_supervisor):
+    """Lấy thông tin arena và obstacles"""
+    try:
+        # --- Arena ---
+        arena = supervisor.getFromDef("rectangle_arena")
+        if not arena:
+            print("Warning: rectangle_arena not found")
+            return None
+
+        arena_size = arena.getField("floorSize").getSFVec2f()
+        w, h = arena_size[0], arena_size[1]
+
+        # --- Lấy tất cả obstacles ---
+        target_types = {"ConveyorBelt", "WoodenPallet", "WoodenPalletStack"}
+        obstacles = []
+
+        root = supervisor.getRoot()
+        children_field = root.getField("children")
+        n = children_field.getCount()
+
+        obstacle_id = 1
+        for i in range(n):
+            try:
+                node = children_field.getMFNode(i)
+                if node and node.getTypeName() in target_types:
+                    # Lấy size và translation
+                    belt_size = get_node_size(node)
+                    belt_translation = node.getField("translation").getSFVec3f()
+
+                    # Tạo obstacle object
+                    obstacles.append({
+                        "id": str(obstacle_id),
+                        "type": node.getTypeName(),
+                        "bbox": calculate_bbox(belt_translation, belt_size)
+                    })
+                    obstacle_id += 1
+
+            except Exception as e:
+                print(f"Error processing node {i}: {e}")
+                continue
+
+        factory_map = {
+            "width": w,
+            "height": h,
+            "name": "Map_20250905_1158",
+            "objects": obstacles,
+            "points": []
+        }
+
+        return factory_map
+
+    except Exception as e:
+        print(f"Error getting arena and obstacles: {e}")
+        return None
+
+
+def get_cached_map():
+    """Lấy map từ cache hoặc tạo mới nếu cần"""
+    global cached_map, cache_timestamp
+
+    with cache_lock:
+        current_time = time.time()
+
+        # Kiểm tra cache có hết hạn không
+        if cached_map is None or (current_time - cache_timestamp) > CACHE_DURATION:
+            print("Refreshing map cache...")
+            start_time = time.time()
+
+            new_map = get_map(root_supervisor)
+
+            if new_map is not None:
+                cached_map = new_map
+                cache_timestamp = current_time
+
+            end_time = time.time()
+            print(f"Map cache refreshed in {end_time - start_time:.3f}s")
+
+        return cached_map
+
+
+def force_refresh_cache():
+    """Buộc refresh cache"""
+    global cached_map, cache_timestamp
+    with cache_lock:
+        cached_map = None
+        cache_timestamp = 0
+
+
+# --- Flask Routes ---
+@app.route('/map', methods=['GET'])
+def get_factory_map():
+    """API endpoint để lấy map"""
+    try:
+        start_time = time.time()
+        map_data = get_cached_map()
+        end_time = time.time()
+
+        if map_data is None:
+            return {"status": "error", "message": "Failed to get map data"}, 500
+
+        print(f"API request processed in {end_time - start_time:.3f}s")
+        return {"status": "ok", "map": map_data}
+
+    except Exception as e:
+        print(f"Error in API endpoint: {e}")
+        return {"status": "error", "message": str(e)}, 500
+
+
+@app.route('/map/refresh', methods=['POST'])
+def refresh_map():
+    """API endpoint để force refresh map cache"""
+    try:
+        force_refresh_cache()
+        map_data = get_cached_map()
+
+        if map_data is None:
+            return {"status": "error", "message": "Failed to refresh map"}, 500
+
+        return {"status": "ok", "message": "Map cache refreshed", "map": map_data}
+
+    except Exception as e:
+        print(f"Error refreshing map: {e}")
+        return {"status": "error", "message": str(e)}, 500
+
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "timestamp": time.time()}
+
+
+def run_flask():
+    """Chạy Flask server"""
+    print("Starting Flask server on http://0.0.0.0:6060")
+    app.run(host='0.0.0.0', port=6060, debug=False, use_reloader=False)
+
+PUBLISH_INTERVAL = 0.05  # 50ms
+
+# --- Main Logic ---
+if __name__ == "__main__":
+    # Khởi tạo cache ban đầu
+    print("Initializing map cache...")
+    initial_map = get_cached_map()
+    if initial_map:
+        print(f"Map initialized with {len(initial_map['objects'])} obstacles")
+    else:
+        print("Warning: Failed to initialize map")
+
+    # Chạy Flask server trong thread riêng
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+
+    print("Flask server started, beginning Webots simulation loop...")
+
+    # Webots simulation loop được tối ưu
+    timestep = int(root_supervisor.getBasicTimeStep())
+    last_cache_refresh = 0
+    loop_count = 0
+    last_publish = 0
+
+    current_time = time.time()
+    last_publish_time = 0.0
+    while root_supervisor.step(timestep) != -1:
+        if current_time - last_publish_time >= PUBLISH_INTERVAL:
+            publish_obstacles()
+            last_publish_time = current_time
+            publish_obstacles()
+
+        current_time = time.time()
+        loop_count += 1
+
+        # Refresh cache mỗi 5 giây hoặc 1000 loops (tùy cái nào đến trước)
+        if (current_time - last_cache_refresh > 5.0):
+            # Chạy refresh trong thread riêng để không block simulation
+            def background_refresh():
+                try:
+                    get_cached_map()
+                except Exception as e:
+                    print(f"Background cache refresh error: {e}")
+
+
+            refresh_thread = threading.Thread(target=background_refresh, daemon=True)
+            refresh_thread.start()
+            last_cache_refresh = current_time
+
+        # Giảm CPU usage
+
+    print("Webots simulation ended")

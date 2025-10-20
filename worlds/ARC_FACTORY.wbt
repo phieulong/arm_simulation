@@ -1,0 +1,454 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "../protos/Khepera4.proto"
+EXTERNPROTO "../protos/ConveyorBelt.proto"
+EXTERNPROTO "../protos/Pioneer3at.proto"
+EXTERNPROTO "../protos/WoodenPallet.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/CardboardBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/PlasticFruitBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/manhole/protos/SquareManhole.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/traffic/protos/SignPole.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/traffic/protos/DirectionPanel.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/humans/pedestrian/protos/Pedestrian.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.43570278230363235 0.43259126282208443 0.7893211544250338 1.8121669075237836
+  position 18.36319913711395 -15.138583083672238 39.36322799636705
+  follow "Pioneer 3-AT"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+DEF rectangle_arena RectangleArena {
+  translation 15 10 0
+  floorSize 30 20
+  floorTileSize 1 1
+  floorAppearance Parquetry {
+    type "dark strip"
+  }
+}
+Pedestrian {
+  translation 14.24 8.57002 1.27
+  rotation 0 0 1 1.5708
+}
+Pedestrian {
+  translation 16.3842 17.72 1.28
+  rotation 0 0 1 -0.523595307179586
+  name "pedestrian(1)"
+}
+Pedestrian {
+  translation 26.7331 5.34865 1.28
+  rotation 0 0 -1 1.5708
+  name "pedestrian(2)"
+}
+SignPole {
+  translation 25.3498 15.6897 0
+  rotation 0 0 1 3.14159
+  height 1
+  signBoards [
+    DirectionPanel {
+      translation 0 0 -0.86
+      width 0.4
+      height 0.2
+    }
+  ]
+}
+PlasticFruitBox {
+  translation 28.2254 1.86879 0.63
+  rotation 0 0 1 0.261799
+  color 0.371527 0.966171 0.557473
+}
+DEF MY_ROBOT Khepera4 {
+  hidden position_0_0 4751.973588222946
+  hidden position_0_1 4740.623181432466
+  hidden translation_1 1.7412591763955415e-12 -4.1855166363423165e-12 5.972901861392211e-13
+  hidden rotation_1 -0.6456660723263083 0.6456661345987382 -0.4077138281675551 2.3673156968048206
+  hidden rotation_2 -0.5272668209154883 0.527266891476428 -0.666317735554487 1.9660706483049293
+  hidden rotation_3 -0.706935798787561 0.7069358392794246 0.021988531894798435 3.1855627180050266
+  translation 29.988119878761463 20.0801139791185 -0.00016052538281853199
+  rotation -5.29218438078895e-10 -2.9709575038446877e-10 1 1.0230885683118878
+  controller "<none>"
+}
+DEF left_big_conveyor_belt_5 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 17.8 15 0
+  rotation 0 0 -1 0
+  size 1 5 1.5
+}
+DEF left_big_conveyor_belt_6 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 21 15 0
+  rotation 0 0 -1 0
+  name "conveyor belt(11)"
+  size 1 5 1.5
+}
+DEF left_small_conveyor_belt_4 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282802856981
+  translation 13.33 14.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(3)"
+  size 1 4 1
+}
+DEF left_big_conveyor_belt_4 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 14.5 15 0
+  rotation 0 0 -1 0
+  name "conveyor belt(4)"
+  size 1 5 1.5
+}
+DEF left_small_conveyor_belt_5 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800945148
+  translation 16.6 14.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(1)"
+  size 1 4 1
+}
+DEF left_small_conveyor_belt_6 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 19.8 14.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(10)"
+  size 1 4 1
+}
+DEF right_small_conveyor_belt_6 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 23 6 0
+  rotation 0 0 -1 0
+  name "conveyor belt(2)"
+  size 1 4 1
+}
+DEF right_big_conveyor_belt_6 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 21.8 5.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(5)"
+  size 1 5 1.5
+}
+ConveyorBelt {
+  hidden translation_1 0 0 0.4484282800942582
+  translation 27.8449 2.58127 0
+  rotation 0 0 -1 0
+  name "conveyor belt(12)"
+  size 4 4 0.6
+}
+DEF right_small_conveyor_belt_5 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 19.8 6 0
+  rotation 0 0 -1 0
+  name "conveyor belt(6)"
+  size 1 4 1
+}
+WoodenPallet {
+  translation 22.5 8.7 0
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 19 8.7 0
+  name "wooden pallet(1)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 9.4 8.7 0
+  name "wooden pallet(6)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 17 11.9 0
+  name "wooden pallet(2)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 10.73 11.9 0
+  name "wooden pallet(3)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 7.5 11.9 0
+  name "wooden pallet(5)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 4.5 11.9 0
+  name "wooden pallet(4)"
+  size 2 1 0.1
+}
+DEF right_big_conveyor_belt_5 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 18.5 5.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(7)"
+  size 1 5 1.5
+}
+DEF right_small_conveyor_belt_4 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 16.46 6 0
+  rotation 0 0 -1 0
+  name "conveyor belt(8)"
+  size 1 4 1
+}
+DEF right_small_conveyor_belt_3 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282802588743
+  translation 13.22 6 0
+  rotation 0 0 -1 0
+  name "conveyor belt(14)"
+  size 1 4 1
+}
+DEF left_small_conveyor_belt_2 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 6.9 14.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(21)"
+  size 1 4 1
+}
+DEF left_small_conveyor_belt_1 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 3.7 14.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(23)"
+  size 1 4 1
+}
+DEF left_small_conveyor_belt_3 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 10.1 14.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(19)"
+  size 1 4 1
+}
+DEF right_small_conveyor_belt_2 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 10 6 0
+  rotation 0 0 -1 0
+  name "conveyor belt(15)"
+  size 1 4 1
+}
+DEF right_small_conveyor_belt_1 ConveyorBelt {
+  hidden translation_1 0 0 0.7484282800942603
+  translation 7 6 0
+  rotation 0 0 -1 0
+  name "conveyor belt(17)"
+  size 1 4 1
+}
+DEF right_big_conveyor_belt_4 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 15.3 5.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(9)"
+  size 1 5 1.5
+}
+DEF right_big_conveyor_belt_3 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 12 5.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(13)"
+  size 1 5 1.5
+}
+DEF left_big_conveyor_belt_3 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 11.3 15 0
+  rotation 0 0 -1 0
+  name "conveyor belt(20)"
+  size 1 5 1.5
+}
+DEF left_big_conveyor_belt_2 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 8.1 15 0
+  rotation 0 0 -1 0
+  name "conveyor belt(22)"
+  size 1 5 1.5
+}
+DEF left_big_conveyor_belt_1 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 4.9 15 0
+  rotation 0 0 -1 0
+  name "conveyor belt(24)"
+  size 1 5 1.5
+}
+DEF right_big_conveyor_belt_2 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 8.8 5.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(16)"
+  size 1 5 1.5
+}
+DEF right_big_conveyor_belt_1 ConveyorBelt {
+  hidden translation_1 0 0 1.1234282800942637
+  translation 5.8 5.5 0
+  rotation 0 0 -1 0
+  name "conveyor belt(18)"
+  size 1 5 1.5
+}
+CardboardBox {
+  translation 27.8384 3.01098 0.71
+  rotation 0 0 1 0.261799
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 28.0224 3.48865 0.71
+  rotation 0 0 1 0.785398
+  name "cardboard box(1)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 21.6903 3.22499 1.6
+  rotation 0 0 1 1.309
+  name "cardboard box(6)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 7.98736 14.1014 1.6
+  rotation 0 0 1 1.309
+  name "cardboard box(7)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 15.3336 4.18682 1.6
+  rotation 0 0 1 2.0944
+  name "cardboard box(10)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 11.2185 13.9355 1.6
+  rotation 0 0 1 2.0944
+  name "cardboard box(11)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 4.6953 16.4739 1.6
+  rotation 0 0 1 2.0944
+  name "cardboard box(12)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 5.94515 4.74132 1.6
+  rotation 0 0 1 1.309
+  name "cardboard box(9)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 26.2061 1.6839 0.71
+  rotation 0 0 1 1.309
+  name "cardboard box(8)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 28.3211 1.96902 0.77
+  rotation 0 0 1 4.692820414042842e-06
+  name "cardboard box(5)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 28.0496 3.95362 0.71
+  rotation 0 0 1 0.261803
+  name "cardboard box(2)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 18.9049 10.8523 0.11
+  rotation 0 0 1 1.5708
+  name "cardboard box(4)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 20.9849 7.7223 0.11
+  rotation 0 0 1 1.5708
+  name "cardboard box(13)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 17.8949 9.9923 0.11
+  rotation 0 0 1 1.5708
+  name "cardboard box(16)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 14.0449 10.0823 0.11
+  rotation 0 0 1 1.5708
+  name "cardboard box(17)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 24.9049 4.5023 0.11
+  rotation 0 0 1 1.5708
+  name "cardboard box(15)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 24.3649 4.5123 0.11
+  rotation 0 0 1 1.5708
+  name "cardboard box(14)"
+  size 0.2 0.2 0.2
+}
+CardboardBox {
+  translation 25.2749 1.59453 0.11
+  rotation 0 0 1 -0.261795307179586
+  name "cardboard box(3)"
+  size 0.2 0.2 0.2
+}
+Pose {
+}
+DEF SUPERVISOR Robot {
+  rotation 0 0 1 -2.8797853071795863
+  controller "floor_mapper"
+  supervisor TRUE
+}
+DEF Pioneer_3-AT Pioneer3at {
+  hidden position_0_0 16510.953940544332
+  hidden position_0_1 14196.161365406235
+  hidden position_0_2 16529.279693377135
+  hidden position_0_3 14216.617191700501
+  hidden linearVelocity_0 4.3952299633771893e-14 -1.3255917828060925e-14 -5.1675835328007286e-17
+  hidden angularVelocity_0 1.3679088377166391e-15 -3.5877561006856107e-16 2.2862032907873638e-15
+  hidden rotation_1 0.5773516024134749 -0.5773476024162304 -0.5773516027299337 2.094404999683543
+  hidden translation_2 4.390430234023778e-13 2.1847962280823109e-13 0.04999999999999215
+  hidden rotation_2 -0.42526537133496617 0.425258256650912 -0.7989397843977734 1.7934126943521096
+  hidden rotation_3 -0.05494772761960815 0.05495055449882749 0.9969760196663272 4.709349902403657
+  hidden linearVelocity_3 4.4355635560914665e-14 -1.3888035312434213e-16 -1.4210462032122962e-16
+  hidden angularVelocity_3 -5.649305495580718e-15 2.3516036322270537e-15 -7.123537505129868e-16
+  hidden rotation_4 -0.6869078653429178 0.6869015755137395 0.23732637882624505 3.607614469021295
+  hidden linearVelocity_4 -5.206674378104297e-14 3.285088525408568e-15 1.4212935080162884e-16
+  hidden angularVelocity_4 -5.912285338886412e-15 -1.1755901267170339e-15 -7.342914843244411e-16
+  hidden rotation_5 -0.22739216979326307 0.22738659601991312 -0.9468833809224813 1.6253580897052982
+  hidden linearVelocity_5 5.134937577432033e-14 -3.730121603532101e-15 1.420923505228574e-16
+  hidden angularVelocity_5 -7.11772635017144e-15 -4.702832821319137e-15 -7.643144552860449e-16
+  hidden rotation_6 -0.7065176279190889 0.7065101879685853 -0.040941369495630556 3.059751660554743
+  hidden linearVelocity_6 -4.489920274957608e-14 3.2407909335786673e-15 -2.842260336878115e-16
+  hidden angularVelocity_6 -5.239434714025618e-15 -7.054325630165493e-15 -7.446960639452335e-16
+  translation 23.297400045644412 12.591499443080918 -0.0023889310687676135
+  rotation 2.4405136255219273e-05 2.477377627584041e-05 -0.9999999993953248 1.5707558157063817
+  controller "pioneer_controller"
+}
+SquareManhole {
+  translation 25 19 0
+}
+WoodenPallet {
+  translation 6 8.7 0
+  name "wooden pallet(7)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 12.72 8.7 0
+  name "wooden pallet(8)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 15.74 8.7 0
+  name "wooden pallet(9)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 13.93 11.89 0
+  name "wooden pallet(10)"
+  size 2 1 0.1
+}
+WoodenPallet {
+  translation 20.37 11.89 0
+  name "wooden pallet(11)"
+  size 2 1 0.1
+}
