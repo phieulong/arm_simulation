@@ -225,8 +225,32 @@ def turn_left():
     set_velocity(-TURN_SPEED, TURN_SPEED)
 
 
+def turn_left_stabilizing():
+    if before_command is None or before_command == 'stop':
+        set_velocity(-TURN_SPEED, TURN_SPEED)
+        return
+    if before_command == 'forward-fast':
+        speed = FORWARD_FAST_SPEED
+    elif before_command == 'forward-slow':
+        speed = FORWARD_SLOW_SPEED
+    else:
+        speed = FORWARD_NORMAL_SPEED
+    set_velocity(speed/2, speed + speed/2)
+
 def turn_right():
     set_velocity(TURN_SPEED, -TURN_SPEED)
+
+def turn_right_stabilizing():
+    if before_command is None or before_command == 'stop':
+        set_velocity(TURN_SPEED, -TURN_SPEED)
+        return
+    if before_command == 'forward-fast':
+        speed = FORWARD_FAST_SPEED
+    elif before_command == 'forward-slow':
+        speed = FORWARD_SLOW_SPEED
+    else:
+        speed = FORWARD_NORMAL_SPEED
+    set_velocity(speed + speed/2, speed/2)
 
 
 def stop():
@@ -249,6 +273,10 @@ current_command = 'stop'
 is_turning = False
 current_yaw = None
 command_queue = deque()
+stabilizing = None
+num = None
+before_command = None
+
 
 # Cache cho GPS và IMU data
 last_gps_update = 0
@@ -286,16 +314,11 @@ def get_current_robot_heading():
 
 
 def set_motion(command):
-    global is_turning, current_yaw, current_command
+    global is_turning, current_yaw, current_command, stabilizing, num, before_command
 
     if is_turning and current_yaw is not None:
         current = get_current_robot_heading()
         diff = angle_diff(current_yaw, current)
-        #TODO: uncommand here
-        # print("Turning ...")
-        # print("current_yaw:", current_yaw)
-        # print("current:", current)
-        # print("diff:", diff)
         if abs(diff) >= (math.pi / 2 - 0.01):
             stop()
             current_command = 'stop'
@@ -307,24 +330,69 @@ def set_motion(command):
             time.sleep(0.001)
         return
 
+    if stabilizing and current_yaw is not None and num is not None:
+        current = get_current_robot_heading()
+        diff = angle_diff(current_yaw, current)
+        rate = 180/num
+        condition = (math.pi / rate - 0.01)
+        print("Rate: ", rate)
+        print("Condition: ", condition)
+        print("Diff: ", abs(diff))
+
+        if abs(diff) >= condition:
+            stop()
+            if before_command is None:
+                current_command = 'stop'
+            else:
+                current_command = before_command
+            stabilizing = False
+            current_yaw = None
+            num = None
+            if command_queue:
+                current_command = command_queue.popleft()
+                set_motion(current_command)
+            time.sleep(0.001)
+        return
+
     if command == 'forward-slow':
+        before_command = command
         move_forward_slow()
     elif command == 'forward':
+        before_command = command
         move_forward_normal()
     elif command == 'forward-fast':
+        before_command = command
         move_forward_fast()
     elif command == 'left':
+        before_command = command
         turn_left()
         is_turning = True
         current_yaw = get_current_robot_heading()
     elif command == 'right':
+        before_command = command
         turn_right()
         is_turning = True
         current_yaw = get_current_robot_heading()
     elif command == 'back':
+        before_command = command
         move_backward()
     elif command == 'stop':
+        before_command = command
         stop()
+    import re
+    left_stabilization = re.match(r'^\s*(left)(?:-(\d+))?\s*$', command, re.IGNORECASE)
+    if left_stabilization is not None:
+        turn_left_stabilizing()
+        stabilizing = True
+        num = int(left_stabilization.group(2)) if left_stabilization.group(2) is not None else None
+        current_yaw = get_current_robot_heading()
+    else:
+        right_stabilization = re.match(r'^\s*(right)(?:-(\d+))?\s*$', command, re.IGNORECASE)
+        if right_stabilization is not None:
+            turn_right_stabilizing()
+            stabilizing = True
+            num = int(right_stabilization.group(2)) if right_stabilization.group(2) is not None else None
+            current_yaw = get_current_robot_heading()
 
 
 app = Flask(__name__)
@@ -335,12 +403,17 @@ def control():
     global current_command, is_turning
     data = request.json
     command = data.get('command', '')
+    import re
 
     if command in ['forward-slow', 'forward', 'forward-fast', 'left', 'right', 'back', 'stop']:
         if is_turning:
             command_queue.append(command)
             return {'status': 'queued', 'queue_length': len(command_queue)}
         else:
+            current_command = command
+            return {'status': 'ok', 'command': current_command}
+    elif re.match(r'^\s*(right|left)(?:-(\d+))?\s*$', command, re.IGNORECASE):
+        if not is_turning:
             current_command = command
             return {'status': 'ok', 'command': current_command}
     else:
