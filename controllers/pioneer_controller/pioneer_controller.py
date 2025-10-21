@@ -152,7 +152,7 @@ class RobotCommandServer:
         global current_command, is_turning
 
         print(f"🤖 Processing OPC UA command: {command}")
-
+        a = extract_direction(command)
         if "forward-slow" in command:
             if not is_turning:
                 current_command = 'forward-slow'
@@ -174,18 +174,24 @@ class RobotCommandServer:
         elif "stop" in command:
             current_command = 'stop'
             print("⏹️  Robot stopped...")
-        elif "left" in command:
+        elif ("left" in a) & ("-" not in a):
             if not is_turning:
                 current_command = 'left'
             else:
                 command_queue.append('left')
             print("🔄 Robot turning left...")
-        elif "right" in command:
+        elif ("right" in a) & ("-" not in a):
             if not is_turning:
                 current_command = 'right'
             else:
                 command_queue.append('right')
             print("🔄 Robot turning right...")
+        elif ("right" in a or "left" in a) & ('-' in a):
+            if not is_turning:
+                current_command = a
+            else:
+                command_queue.append(a)
+            print(f"🔄 Robot turning {a}...")
         elif "back" in command:
             if not is_turning:
                 current_command = 'back'
@@ -194,6 +200,16 @@ class RobotCommandServer:
             print("⬅️ Robot moving backward...")
         else:
             print(f"❓ Unknown OPC UA command: {command}")
+
+
+def extract_direction(s: str):
+    """
+    Return the first match like 'left', 'right', 'left-3', 'right-29' from the input string.
+    """
+    import re
+    return s.split(": ")[-1]
+    # m = re.search(r'\b(?:left|right)(?:-\d+)?\b', s, re.IGNORECASE)
+    # return m.group(0) if m else None
 
 
 # ==== Hàm set tốc độ ====
@@ -368,11 +384,13 @@ def set_motion(command):
         turn_left()
         is_turning = True
         current_yaw = get_current_robot_heading()
+        return
     elif command == 'right':
         before_command = command
         turn_right()
         is_turning = True
         current_yaw = get_current_robot_heading()
+        return
     elif command == 'back':
         before_command = command
         move_backward()

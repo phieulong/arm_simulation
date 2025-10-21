@@ -18,8 +18,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.43570278230363235 0.43259126282208443 0.7893211544250338 1.8121669075237836
-  position 18.36319913711395 -15.138583083672238 39.36322799636705
+  orientation 0.39371649883255844 -0.4015291446213011 -0.8268988236578392 4.542784097540356
+  position 17.532489874357793 -0.3841666216288192 13.530565968026561
   follow "Pioneer 3-AT"
 }
 TexturedBackground {
@@ -72,74 +72,74 @@ DEF MY_ROBOT Khepera4 {
   hidden rotation_1 -0.6456660723263083 0.6456661345987382 -0.4077138281675551 2.3673156968048206
   hidden rotation_2 -0.5272668209154883 0.527266891476428 -0.666317735554487 1.9660706483049293
   hidden rotation_3 -0.706935798787561 0.7069358392794246 0.021988531894798435 3.1855627180050266
-  translation 29.988119878761463 20.0801139791185 -0.00016052538281853199
-  rotation -5.29218438078895e-10 -2.9709575038446877e-10 1 1.0230885683118878
+  translation 29.988119878761832 20.080113979118153 -0.00016052535818346023
+  rotation -5.292192261967615e-10 -2.9709591919675475e-10 1 1.0230885683118442
   controller "<none>"
 }
 DEF left_big_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 17.8 15 0
   rotation 0 0 -1 0
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 21 15 0
   rotation 0 0 -1 0
   name "conveyor belt(11)"
   size 1 5 1.5
 }
 DEF left_small_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282802856981
+  hidden translation_1 0 0 0.7482556398223881
   translation 13.33 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(3)"
   size 1 4 1
 }
 DEF left_big_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 14.5 15 0
   rotation 0 0 -1 0
   name "conveyor belt(4)"
   size 1 5 1.5
 }
 DEF left_small_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800945148
+  hidden translation_1 0 0 0.7482556396312048
   translation 16.6 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(1)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 19.8 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(10)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 23 6 0
   rotation 0 0 -1 0
   name "conveyor belt(2)"
   size 1 4 1
 }
 DEF right_big_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 21.8 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(5)"
   size 1 5 1.5
 }
 ConveyorBelt {
-  hidden translation_1 0 0 0.4484282800942582
+  hidden translation_1 0 0 0.4482556396309468
   translation 27.8449 2.58127 0
   rotation 0 0 -1 0
   name "conveyor belt(12)"
   size 4 4 0.6
 }
 DEF right_small_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 19.8 6 0
   rotation 0 0 -1 0
   name "conveyor belt(6)"
@@ -180,105 +180,105 @@ WoodenPallet {
   size 2 1 0.1
 }
 DEF right_big_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 18.5 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(7)"
   size 1 5 1.5
 }
 DEF right_small_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 16.46 6 0
   rotation 0 0 -1 0
   name "conveyor belt(8)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282802588743
+  hidden translation_1 0 0 0.7482556397955643
   translation 13.22 6 0
   rotation 0 0 -1 0
   name "conveyor belt(14)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 6.9 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(21)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 3.7 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(23)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 10.1 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(19)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 10 6 0
   rotation 0 0 -1 0
   name "conveyor belt(15)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 0.7484282800942603
+  hidden translation_1 0 0 0.7482556396309503
   translation 7 6 0
   rotation 0 0 -1 0
   name "conveyor belt(17)"
   size 1 4 1
 }
 DEF right_big_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 15.3 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(9)"
   size 1 5 1.5
 }
 DEF right_big_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 12 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(13)"
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 11.3 15 0
   rotation 0 0 -1 0
   name "conveyor belt(20)"
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 8.1 15 0
   rotation 0 0 -1 0
   name "conveyor belt(22)"
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 4.9 15 0
   rotation 0 0 -1 0
   name "conveyor belt(24)"
   size 1 5 1.5
 }
 DEF right_big_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 8.8 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(16)"
   size 1 5 1.5
 }
 DEF right_big_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 1.1234282800942637
+  hidden translation_1 0 0 1.1232556396309556
   translation 5.8 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(18)"
@@ -350,7 +350,7 @@ CardboardBox {
   size 0.2 0.2 0.2
 }
 CardboardBox {
-  translation 18.9049 10.8523 0.11
+  translation 18.9049 8.9223 0.11
   rotation 0 0 1 1.5708
   name "cardboard box(4)"
   size 0.2 0.2 0.2
@@ -362,7 +362,7 @@ CardboardBox {
   size 0.2 0.2 0.2
 }
 CardboardBox {
-  translation 17.8949 9.9923 0.11
+  translation 17.8949 8.8323 0.11
   rotation 0 0 1 1.5708
   name "cardboard box(16)"
   size 0.2 0.2 0.2
@@ -399,29 +399,19 @@ DEF SUPERVISOR Robot {
   supervisor TRUE
 }
 DEF Pioneer_3-AT Pioneer3at {
-  hidden position_0_0 16510.953940544332
-  hidden position_0_1 14196.161365406235
-  hidden position_0_2 16529.279693377135
-  hidden position_0_3 14216.617191700501
-  hidden linearVelocity_0 4.3952299633771893e-14 -1.3255917828060925e-14 -5.1675835328007286e-17
-  hidden angularVelocity_0 1.3679088377166391e-15 -3.5877561006856107e-16 2.2862032907873638e-15
+  hidden position_0_0 16683.581855001627
+  hidden position_0_1 14369.79537161179
+  hidden position_0_2 16703.328009705867
+  hidden position_0_3 14391.60938270307
   hidden rotation_1 0.5773516024134749 -0.5773476024162304 -0.5773516027299337 2.094404999683543
   hidden translation_2 4.390430234023778e-13 2.1847962280823109e-13 0.04999999999999215
   hidden rotation_2 -0.42526537133496617 0.425258256650912 -0.7989397843977734 1.7934126943521096
-  hidden rotation_3 -0.05494772761960815 0.05495055449882749 0.9969760196663272 4.709349902403657
-  hidden linearVelocity_3 4.4355635560914665e-14 -1.3888035312434213e-16 -1.4210462032122962e-16
-  hidden angularVelocity_3 -5.649305495580718e-15 2.3516036322270537e-15 -7.123537505129868e-16
-  hidden rotation_4 -0.6869078653429178 0.6869015755137395 0.23732637882624505 3.607614469021295
-  hidden linearVelocity_4 -5.206674378104297e-14 3.285088525408568e-15 1.4212935080162884e-16
-  hidden angularVelocity_4 -5.912285338886412e-15 -1.1755901267170339e-15 -7.342914843244411e-16
-  hidden rotation_5 -0.22739216979326307 0.22738659601991312 -0.9468833809224813 1.6253580897052982
-  hidden linearVelocity_5 5.134937577432033e-14 -3.730121603532101e-15 1.420923505228574e-16
-  hidden angularVelocity_5 -7.11772635017144e-15 -4.702832821319137e-15 -7.643144552860449e-16
-  hidden rotation_6 -0.7065176279190889 0.7065101879685853 -0.040941369495630556 3.059751660554743
-  hidden linearVelocity_6 -4.489920274957608e-14 3.2407909335786673e-15 -2.842260336878115e-16
-  hidden angularVelocity_6 -5.239434714025618e-15 -7.054325630165493e-15 -7.446960639452335e-16
-  translation 23.297400045644412 12.591499443080918 -0.0023889310687676135
-  rotation 2.4405136255219273e-05 2.477377627584041e-05 -0.9999999993953248 1.5707558157063817
+  hidden rotation_3 -0.7038764779581891 0.7038688794183439 -0.095532739746853 2.9511024715851004
+  hidden rotation_4 -0.5656453665982469 0.5656374784477219 -0.6000829627820119 2.0606379393611025
+  hidden rotation_5 0.5437168990931167 -0.5437134576944079 -0.6393337231544703 2.003923906490885
+  hidden rotation_6 -0.6540538820098951 0.6540458295255324 -0.3800494340320009 2.415215213219195
+  translation 23.145 11 -0.00238893
+  rotation -2.4589386214477447e-05 -9.610738492348952e-08 0.9999999996976764 3.1366778866345157
   controller "pioneer_controller"
 }
 SquareManhole {
