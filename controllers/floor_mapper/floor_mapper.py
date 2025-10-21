@@ -243,6 +243,98 @@ def run_flask():
 
 PUBLISH_INTERVAL = 0.05  # 50ms
 
+has_rotated = False
+
+import math
+rotated_manhole_ids = set()
+def rotate_robot_near_point(supervisor, robot_def, target_point, threshold=0.2, direction="right", angle_deg:float =90):
+    """Quay robot khi đến gần target_point một lần duy nhất."""
+    node = supervisor.getFromDef(robot_def)
+    if node is None:
+        print(f"[WARN] Không tìm thấy robot DEF='{robot_def}'")
+        return False
+
+    translation = node.getField("translation").getSFVec3f()
+    pos_x, pos_y = translation[0], translation[1]
+    dx = target_point[0] - pos_x
+    dy = target_point[1] - pos_y
+    distance = math.sqrt(dx * dx + dy * dy)
+
+    if distance <= threshold:
+        rotation_field = node.getField("rotation")
+        current_rot = rotation_field.getSFRotation()
+        current_yaw = current_rot[3]
+
+        delta_angle = math.radians(angle_deg)
+        if direction == "left":
+            new_yaw = current_yaw + delta_angle
+        else:
+            new_yaw = current_yaw - delta_angle
+
+        rotation_field.setSFRotation([0, 0, 1, new_yaw])
+        print(f"[INFO] Robot quay {direction} {angle_deg:.1f}° tại vị trí gần {target_point}")
+        return True
+
+    return False
+
+
+import random
+def rotate_robot_random(supervisor, robot_def, target_point, threshold=0.2, angle_range=(45, 135)):
+    """Wrapper random hướng (left/right) và góc quay trong khoảng cho trước."""
+    direction = random.choice(["left", "right"])
+    angle_deg = random.uniform(angle_range[0], angle_range[1])
+
+    return rotate_robot_near_point(
+        supervisor=supervisor,
+        robot_def=robot_def,
+        target_point=target_point,
+        threshold=threshold,
+        direction=direction,
+        angle_deg=angle_deg
+    )
+
+def rotate_near_manhole_objects(supervisor, robot_def, threshold=0.25, angle_range=(60, 120)):
+    """
+    Hàm wrapper cao nhất:
+    - Tự động tìm tất cả object PROTO SquareManhole trong world.
+    - Với mỗi object, nếu robot đến gần, quay random 1 lần.
+    - Đảm bảo mỗi manhole chỉ kích hoạt 1 lần duy nhất.
+    """
+    global rotated_manhole_ids
+
+    root = supervisor.getRoot()
+    children_field = root.getField("children")
+    n = children_field.getCount()
+
+    for i in range(n):
+        try:
+            node = children_field.getMFNode(i)
+            if "SquareManhole" in node.getTypeName():
+                # Lấy id duy nhất (DEF name hoặc index)
+                def_name = node.getDef() or f"SquareManhole_{i}"
+                if def_name in rotated_manhole_ids:
+                    continue  # Đã quay rồi => bỏ qua
+
+                # Lấy vị trí manhole
+                pos = node.getField("translation").getSFVec3f()
+                manhole_point = [pos[0], pos[1]]
+
+                # Gọi hàm random quay
+                rotated = rotate_robot_random(
+                    supervisor=supervisor,
+                    robot_def=robot_def,
+                    target_point=manhole_point,
+                    threshold=threshold,
+                    angle_range=angle_range
+                )
+
+                if rotated:
+                    rotated_manhole_ids.add(def_name)
+
+        except Exception as e:
+            print(f"[ERROR] Lỗi xử lý node {i}: {e}")
+            continue
+
 # --- Main Logic ---
 if __name__ == "__main__":
     # Khởi tạo cache ban đầu
@@ -268,6 +360,13 @@ if __name__ == "__main__":
     current_time = time.time()
     last_publish_time = 0.0
     while root_supervisor.step(timestep) != -1:
+        rotate_near_manhole_objects(
+            supervisor=root_supervisor,
+            robot_def="Pioneer_3-AT",
+            threshold=0.5,
+            angle_range=(5, 10)
+        )
+
         if current_time - last_publish_time >= PUBLISH_INTERVAL:
             publish_obstacles()
             last_publish_time = current_time
