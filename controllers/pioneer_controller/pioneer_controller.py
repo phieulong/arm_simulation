@@ -349,6 +349,8 @@ def set_motion(command):
     if stabilizing and current_yaw is not None and num is not None:
         current = get_current_robot_heading()
         diff = angle_diff(current_yaw, current)
+        if (num is None) or (num <= 0):
+            return
         rate = 180/num
         condition = (math.pi / rate - 0.01)
         print("Rate: ", rate)
