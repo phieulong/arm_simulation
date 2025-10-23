@@ -368,7 +368,6 @@ if __name__ == "__main__":
         )
 
         if current_time - last_publish_time >= PUBLISH_INTERVAL:
-            publish_obstacles()
             last_publish_time = current_time
             publish_obstacles()
 

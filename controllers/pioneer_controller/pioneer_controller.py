@@ -18,7 +18,6 @@ FORWARD_SLOW_SPEED = 1
 BACKWARD_SPEED = 4.0
 TURN_SPEED = 0.5
 TURN_DURATION = 3  # giây
-
 # ==== Khởi tạo robot ====
 robot = Robot()
 timestep = int(robot.getBasicTimeStep())
@@ -152,7 +151,7 @@ class RobotCommandServer:
         global current_command, is_turning
 
         print(f"🤖 Processing OPC UA command: {command}")
-        a = extract_direction(command)
+        cmd = extract_direction(command)
         if "forward-slow" in command:
             if not is_turning:
                 current_command = 'forward-slow'
@@ -174,24 +173,24 @@ class RobotCommandServer:
         elif "stop" in command:
             current_command = 'stop'
             print("⏹️  Robot stopped...")
-        elif ("left" in a) & ("-" not in a):
+        elif ("left" in cmd) & ("-" not in cmd):
             if not is_turning:
                 current_command = 'left'
             else:
                 command_queue.append('left')
             print("🔄 Robot turning left...")
-        elif ("right" in a) & ("-" not in a):
+        elif ("right" in cmd) & ("-" not in cmd):
             if not is_turning:
                 current_command = 'right'
             else:
                 command_queue.append('right')
             print("🔄 Robot turning right...")
-        elif ("right" in a or "left" in a) & ('-' in a):
+        elif ("right" in cmd or "left" in cmd) & ('-' in cmd):
             if not is_turning:
-                current_command = a
+                current_command = cmd
             else:
-                command_queue.append(a)
-            print(f"🔄 Robot turning {a}...")
+                command_queue.append(cmd)
+            print(f"🔄 Robot turning {cmd}...")
         elif "back" in command:
             if not is_turning:
                 current_command = 'back'
@@ -206,7 +205,6 @@ def extract_direction(s: str):
     """
     Return the first match like 'left', 'right', 'left-3', 'right-29' from the input string.
     """
-    import re
     return s.split(": ")[-1]
     # m = re.search(r'\b(?:left|right)(?:-\d+)?\b', s, re.IGNORECASE)
     # return m.group(0) if m else None
@@ -400,18 +398,18 @@ def set_motion(command):
         before_command = command
         stop()
     import re
-    left_stabilization = re.match(r'^\s*(left)(?:-(\d+))?\s*$', command, re.IGNORECASE)
+    left_stabilization = re.match(r'^\s*(left)-([0-9]+\.[0-9]+)\s*$', command, re.IGNORECASE)
     if left_stabilization is not None:
         turn_left_stabilizing()
         stabilizing = True
-        num = int(left_stabilization.group(2)) if left_stabilization.group(2) is not None else None
+        num = float(left_stabilization.group(2)) if left_stabilization.group(2) is not None else None
         current_yaw = get_current_robot_heading()
     else:
-        right_stabilization = re.match(r'^\s*(right)(?:-(\d+))?\s*$', command, re.IGNORECASE)
+        right_stabilization = re.match(r'^\s*(right)-([0-9]+\.[0-9]+)\s*$', command, re.IGNORECASE)
         if right_stabilization is not None:
             turn_right_stabilizing()
             stabilizing = True
-            num = int(right_stabilization.group(2)) if right_stabilization.group(2) is not None else None
+            num = float(right_stabilization.group(2)) if right_stabilization.group(2) is not None else None
             current_yaw = get_current_robot_heading()
 
 
@@ -432,7 +430,7 @@ def control():
         else:
             current_command = command
             return {'status': 'ok', 'command': current_command}
-    elif re.match(r'^\s*(right|left)(?:-(\d+))?\s*$', command, re.IGNORECASE):
+    elif re.match(r'^\s*(?:left|right)-([0-9]+\.[0-9]+)\s*$', command, re.IGNORECASE):
         if not is_turning:
             current_command = command
             return {'status': 'ok', 'command': current_command}
@@ -462,7 +460,9 @@ redis_pool = redis.ConnectionPool(host='127.0.0.1', port=6379, db=0, max_connect
 redis_client = redis.Redis(connection_pool=redis_pool)
 
 last_redis_publish = 0
-REDIS_PUBLISH_INTERVAL = 0.1
+REDIS_PUBLISH_INTERVAL = (0.1, 0.3)
+start, end = REDIS_PUBLISH_INTERVAL
+random_delay = random.uniform(start, end)
 
 # map_supervisor = Supervisor()
 
@@ -491,11 +491,14 @@ def parse_obstacles_message(message):
         result.append(converted)
     return result
 
+
 def publish_robot_and_obstacle_pose():
-    global last_redis_publish
+    global last_redis_publish, random_delay
     current_time = time.time()
 
-    if current_time - last_redis_publish < REDIS_PUBLISH_INTERVAL:
+
+
+    if current_time - last_redis_publish < random_delay:
         return
 
     obstacles = []
@@ -524,6 +527,8 @@ def publish_robot_and_obstacle_pose():
         }
         redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
         last_redis_publish = current_time
+        start, end = REDIS_PUBLISH_INTERVAL
+        random_delay = random.uniform(start, end)
 
     except Exception as e:
         print(f"Redis publish error: {e}")
