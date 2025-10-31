@@ -128,10 +128,6 @@ class RobotCommandServer:
                     if (current_value != self.last_processed_command and
                             current_value != "Ready" and
                             current_value is not None):
-                        # if "||" in current_value:
-                        #     tm = time.time_ns()
-                        #     print(f"Timestamp now (ns): {tm}")
-                        #     print(f"Current OPC UA value: {current_value}")
                         timestamp = datetime.now().strftime('%H:%M:%S')
                         print(f"📨 [{timestamp}] Received OPC UA command: {current_value}")
 
@@ -141,36 +137,42 @@ class RobotCommandServer:
                 except Exception as e:
                     print(f"Error reading OPC UA value: {e}")
 
-                time.sleep(0.1)
-
         except Exception as e:
             print(f"❌ Error in OPC UA monitoring: {e}")
 
     def process_command(self, command):
         """Process received robot command"""
-        global current_command, is_turning
+        global current_command, is_turning, stabilizing
 
         print(f"🤖 Processing OPC UA command: {command}")
         cmd = extract_direction(command)
         if "forward-slow" in command:
+            is_turning = False
+            stabilizing = False
             if not is_turning:
                 current_command = 'forward-slow'
             else:
                 command_queue.append('forward-slow')
             print("▶️  Robot is running slow...")
         elif "forward-fast" in command:
+            is_turning = False
+            stabilizing = False
             if not is_turning:
                 current_command = 'forward-fast'
             else:
                 command_queue.append('forward-fast')
             print("▶️  Robot is running fast...")
         elif "forward" in command:
+            is_turning = False
+            stabilizing = False
             if not is_turning:
                 current_command = 'forward'
             else:
                 command_queue.append('forward')
             print("▶️  Robot moving forward...")
         elif "stop" in command:
+            is_turning = False
+            stabilizing = False
             current_command = 'stop'
             print("⏹️  Robot stopped...")
         elif ("left" in cmd) & ("-" not in cmd):
@@ -351,9 +353,6 @@ def set_motion(command):
             return
         rate = 180/num
         condition = (math.pi / rate - 0.01)
-        print("Rate: ", rate)
-        print("Condition: ", condition)
-        print("Diff: ", abs(diff))
 
         if abs(diff) >= condition:
             stop()
@@ -397,6 +396,7 @@ def set_motion(command):
     elif command == 'stop':
         before_command = command
         stop()
+        return
     import re
     left_stabilization = re.match(r'^\s*(left)-([0-9]+\.[0-9]+)\s*$', command, re.IGNORECASE)
     if left_stabilization is not None:
