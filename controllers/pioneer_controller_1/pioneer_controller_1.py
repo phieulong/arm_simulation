@@ -42,7 +42,7 @@ imu.enable(timestep)
 
 
 class RobotCommandServer:
-    def __init__(self, endpoint="opc.tcp://0.0.0.0:4840/freeopcua/server/"):
+    def __init__(self, endpoint="opc.tcp://0.0.0.0:4841/freeopcua/server/"):
         self.server = Server()
         self.endpoint = endpoint
         self.message_var = None
@@ -483,29 +483,84 @@ def current_robot_heading():
 
 
 def run_flask():
-    print("🌐 Starting Flask server on http://0.0.0.0:6000")
-    app.run(host="0.0.0.0", port=6000, debug=False, use_reloader=False, threaded=True)
+    print("🌐 Starting Flask server on http://0.0.0.0:6001")
+    app.run(host="0.0.0.0", port=6001, debug=False, use_reloader=False, threaded=True)
 
 
 # ==== Redis client với connection pooling ====
 redis_pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=0, max_connections=2)
 redis_client = redis.Redis(connection_pool=redis_pool)
 
-def publish_current_pose():
+last_redis_publish = 0
+REDIS_PUBLISH_INTERVAL = (0.1, 0.3)
+start, end = REDIS_PUBLISH_INTERVAL
+random_delay = random.uniform(start, end)
+
+# map_supervisor = Supervisor()
+
+obstacle_topic = redis_client.pubsub()
+obstacle_topic.subscribe("obstacles")
+
+
+def parse_obstacles_message(message):
+    import time, json
+
+    data = json.loads(message.decode())
+    obstacles = data.get("obstacles", [])
+    result = []
+    timestamp_str = str(int(time.time() * 1000))
+    for obj in obstacles:
+        bbox = obj.get("bbox", {})
+        center = obj.get("center", {})
+        converted = {
+            "timestamp": timestamp_str,
+            "camera_id": 0,
+            "class": "static",
+            "object_id": int(obj.get("id", 0)),
+            "conf": 0.95,
+            "center": center,
+            "corners": bbox,
+        }
+        result.append(converted)
+    return result
+
+
+def publish_robot_and_obstacle_pose():
+    global last_redis_publish, random_delay
+    current_time = time.time()
+
+    if current_time - last_redis_publish < random_delay:
+        return
+
+    obstacles = []
+    while True:
+        msg = obstacle_topic.get_message(ignore_subscribe_messages=True)
+        if msg is None:
+            break  # Không có message mới -> dừng đọc
+        if msg["type"] == "message":
+            obstacles = parse_obstacles_message(msg["data"])
     try:
         x, y = get_current_robot_pose()
         heading = get_current_robot_heading()
 
-        current_robot = {
-            "timestamp": time.time_ns(),
-            "camera_id": 0,
-            "object_id": 0,
-            "yaw": heading,
-            "center": [x, y],
-            "corners": [],
+        message = {
+            "april_tags": [
+                {
+                    "timestamp": time.time_ns(),
+                    "camera_id": 1,
+                    "object_id": 1,
+                    "yaw": heading,
+                    "center": [x, y],
+                    "corners": [],
+                }
+            ],
+            "objects": obstacles,
         }
-        current_robot_message = json.dumps({"robot": current_robot})
-        redis_client.publish("robot_0", current_robot_message)
+        redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
+        last_redis_publish = current_time
+        start, end = REDIS_PUBLISH_INTERVAL
+        random_delay = random.uniform(start, end)
+
     except Exception as e:
         print(f"Redis publish error: {e}")
 
@@ -523,9 +578,9 @@ if not opc_ua_started:
     print("⚠️  Warning: OPC UA server failed to start, continuing with Flask only")
 
 print("✅ Controller started with servers:")
-print("   - Flask API server at http://localhost:6000/control")
+print("   - Flask API server at http://localhost:6001/control")
 if opc_ua_started:
-    print("   - OPC UA server at opc.tcp://0.0.0.0:4840/freeopcua/server/")
+    print("   - OPC UA server at opc.tcp://0.0.0.0:4841/freeopcua/server/")
 
 print("🔄 Starting main simulation loop...")
 # ==== Main Simulation Loop ====
@@ -544,7 +599,7 @@ try:
 
         # Publish current robot pose and obstacle data to Redis stream
         # This allows other systems to track the robot's position and nearby obstacles
-        publish_current_pose()
+        publish_robot_and_obstacle_pose()
 
         # Execute the current motion command (forward, turn, stop, etc.)
         # This function handles all movement logic including turning and stabilization

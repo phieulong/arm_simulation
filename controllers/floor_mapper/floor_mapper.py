@@ -1,15 +1,19 @@
 import json
-
 from controller import Supervisor
 import requests
 import redis
 import threading
 import time
 from flask import Flask
+import random
 
 # --- Cấu hình bản đồ ---
 API_URL = "http://localhost:6060/map"
 
+last_redis_publish = 0
+REDIS_PUBLISH_INTERVAL = (0.1, 0.3)
+start, end = REDIS_PUBLISH_INTERVAL
+random_delay = random.uniform(start, end)
 # Khởi tạo Supervisor
 root_supervisor = Supervisor()
 
@@ -55,17 +59,37 @@ def calculate_bbox(translation, size):
         [bx + bl / 2, by - bw / 2],  # bottom-right
         [bx + bl / 2, by + bw / 2],  # top-right
     ]
+robot_0_topic = redis_client.pubsub()
+robot_0_topic.subscribe("robot_0")
 
-def publish_obstacles(supervisor = root_supervisor):
+def parse_robot_message(message):
+    import json
+    data = json.loads(message.decode())
+    return data.get("robot", {})
+
+def publish_robot_and_obstacles(supervisor = root_supervisor):
+    global last_redis_publish, random_delay
+
+    now = time.time()
     """Lấy thông tin arena và obstacles"""
     try:
         # supervisor.simulationResetPhysics()
         # supervisor.step(0)  # Đảm bảo supervisor cập nhật trạng thái
         # --- Arena ---
+        if now - last_redis_publish < random_delay:
+            return None
         arena = supervisor.getFromDef("rectangle_arena")
         if not arena:
             print("Warning: rectangle_arena not found")
             return None
+
+        robot_0 = {}
+        while True:
+            msg = robot_0_topic.get_message(ignore_subscribe_messages=True)
+            if msg is None:
+                break
+            if msg["type"] == "message":
+                robot_0 = parse_robot_message(msg["data"])
 
         arena_size = arena.getField("floorSize").getSFVec2f()
         w, h = arena_size[0], arena_size[1]
@@ -87,21 +111,27 @@ def publish_obstacles(supervisor = root_supervisor):
                     belt_size = get_node_size(node)
                     belt_translation = node.getField("translation").getSFVec3f()
                     # Tạo obstacle object
+                    timestamp_str = str(int(time.time() * 1000))
                     obstacles.append({
-                        "id": str(obstacle_id),
-                        "type": node.getTypeName(),
+                        "timestamp": timestamp_str,
+                        "camera_id": 0,
+                        "class": "static",
+                        "object_id": obstacle_id,
+                        "conf": 0.95,
                         "center": [belt_translation[0], belt_translation[1]],
-                        "bbox": calculate_bbox(belt_translation, belt_size)
+                        "corners": calculate_bbox(belt_translation, belt_size),
                     })
                     obstacle_id += 1
-
             except Exception as e:
                 print(f"Error processing node {i}: {e}")
                 continue
-        message = json.dumps({"obstacles": obstacles})
-        redis_client.publish("obstacles", message)
+        message = {"april_tags": [robot_0], "objects": obstacles}
+        redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
+        last_redis_publish = now
+        start, end = REDIS_PUBLISH_INTERVAL
+        random_delay = random.uniform(start, end)
     except Exception as e:
-        print(f"Error getting arena and obstacles: {e}")
+        print(f"Error publishing apriltags and robots: {e}")
         return None
 
 
@@ -369,7 +399,7 @@ if __name__ == "__main__":
 
         if current_time - last_publish_time >= PUBLISH_INTERVAL:
             last_publish_time = current_time
-            publish_obstacles()
+            publish_robot_and_obstacles()
 
         current_time = time.time()
         loop_count += 1
