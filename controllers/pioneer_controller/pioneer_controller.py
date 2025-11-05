@@ -23,21 +23,21 @@ robot = Robot()
 timestep = int(robot.getBasicTimeStep())
 
 # ==== Khởi tạo motor ====
-front_left_motor = robot.getDevice('front left wheel')
-rear_left_motor = robot.getDevice('back left wheel')
-front_right_motor = robot.getDevice('front right wheel')
-rear_right_motor = robot.getDevice('back right wheel')
+front_left_motor = robot.getDevice("front left wheel")
+rear_left_motor = robot.getDevice("back left wheel")
+front_right_motor = robot.getDevice("front right wheel")
+rear_right_motor = robot.getDevice("back right wheel")
 
 motors = [front_left_motor, rear_left_motor, front_right_motor, rear_right_motor]
 for m in motors:
-    m.setPosition(float('inf'))
+    m.setPosition(float("inf"))
     m.setVelocity(0.0)
 
 # ==== Khởi tạo GPS ====
-gps = robot.getDevice('gps')
+gps = robot.getDevice("gps")
 gps.enable(timestep)
 
-imu = robot.getDevice('inertial unit')
+imu = robot.getDevice("inertial unit")
 imu.enable(timestep)
 
 
@@ -64,14 +64,14 @@ class RobotCommandServer:
         robot_device = objects.add_object(self.namespace_idx, "RobotController")
 
         self.message_var = robot_device.add_variable(
-            self.namespace_idx,
-            "CommandMessage",
-            "Ready"
+            self.namespace_idx, "CommandMessage", "Ready"
         )
         self.message_var.set_writable(True)
 
         node_id = self.message_var.nodeid
-        print(f"Message Variable NodeId: ns={node_id.NamespaceIndex};i={node_id.Identifier}")
+        print(
+            f"Message Variable NodeId: ns={node_id.NamespaceIndex};i={node_id.Identifier}"
+        )
 
         return node_id
 
@@ -81,7 +81,9 @@ class RobotCommandServer:
             node_id = self.setup_server()
             self.server.start()
             print(f"🚀 Robot Command Server started at {self.endpoint}")
-            print(f"📍 Message NodeId: ns={node_id.NamespaceIndex};i={node_id.Identifier}")
+            print(
+                f"📍 Message NodeId: ns={node_id.NamespaceIndex};i={node_id.Identifier}"
+            )
 
             self.start_monitoring()
             return True
@@ -92,7 +94,9 @@ class RobotCommandServer:
     def start_monitoring(self):
         """Start monitoring in separate thread"""
         self.is_monitoring = True
-        self.monitor_thread = threading.Thread(target=self._monitor_messages, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._monitor_messages, daemon=True
+        )
         self.monitor_thread.start()
         print("📡 OPC UA monitoring started in background thread")
 
@@ -125,11 +129,15 @@ class RobotCommandServer:
                     current_value = self.message_var.get_value()
 
                     # Chỉ xử lý khi có command mới và khác "Ready"
-                    if (current_value != self.last_processed_command and
-                            current_value != "Ready" and
-                            current_value is not None):
-                        timestamp = datetime.now().strftime('%H:%M:%S')
-                        print(f"📨 [{timestamp}] Received OPC UA command: {current_value}")
+                    if (
+                        current_value != self.last_processed_command
+                        and current_value != "Ready"
+                        and current_value is not None
+                    ):
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        print(
+                            f"📨 [{timestamp}] Received OPC UA command: {current_value}"
+                        )
 
                         self.process_command(current_value)
                         self.last_processed_command = current_value
@@ -150,44 +158,44 @@ class RobotCommandServer:
             is_turning = False
             stabilizing = False
             if not is_turning:
-                current_command = 'forward-slow'
+                current_command = "forward-slow"
             else:
-                command_queue.append('forward-slow')
+                command_queue.append("forward-slow")
             print("▶️  Robot is running slow...")
         elif "forward-fast" in command:
             is_turning = False
             stabilizing = False
             if not is_turning:
-                current_command = 'forward-fast'
+                current_command = "forward-fast"
             else:
-                command_queue.append('forward-fast')
+                command_queue.append("forward-fast")
             print("▶️  Robot is running fast...")
         elif "forward" in command:
             is_turning = False
             stabilizing = False
             if not is_turning:
-                current_command = 'forward'
+                current_command = "forward"
             else:
-                command_queue.append('forward')
+                command_queue.append("forward")
             print("▶️  Robot moving forward...")
         elif "stop" in command:
             is_turning = False
             stabilizing = False
-            current_command = 'stop'
+            current_command = "stop"
             print("⏹️  Robot stopped...")
         elif ("left" in cmd) & ("-" not in cmd):
             if not is_turning:
-                current_command = 'left'
+                current_command = "left"
             else:
-                command_queue.append('left')
+                command_queue.append("left")
             print("🔄 Robot turning left...")
         elif ("right" in cmd) & ("-" not in cmd):
             if not is_turning:
-                current_command = 'right'
+                current_command = "right"
             else:
-                command_queue.append('right')
+                command_queue.append("right")
             print("🔄 Robot turning right...")
-        elif ("right" in cmd or "left" in cmd) & ('-' in cmd):
+        elif ("right" in cmd or "left" in cmd) & ("-" in cmd):
             if not is_turning:
                 current_command = cmd
             else:
@@ -195,9 +203,9 @@ class RobotCommandServer:
             print(f"🔄 Robot turning {cmd}...")
         elif "back" in command:
             if not is_turning:
-                current_command = 'back'
+                current_command = "back"
             else:
-                command_queue.append('back')
+                command_queue.append("back")
             print("⬅️ Robot moving backward...")
         else:
             print(f"❓ Unknown OPC UA command: {command}")
@@ -242,31 +250,33 @@ def turn_left():
 
 
 def turn_left_stabilizing():
-    if before_command is None or before_command == 'stop':
+    if before_command is None or before_command == "stop":
         set_velocity(-TURN_SPEED, TURN_SPEED)
         return
-    if before_command == 'forward-fast':
+    if before_command == "forward-fast":
         speed = FORWARD_FAST_SPEED
-    elif before_command == 'forward-slow':
+    elif before_command == "forward-slow":
         speed = FORWARD_SLOW_SPEED
     else:
         speed = FORWARD_NORMAL_SPEED
-    set_velocity(speed/2, speed + speed/2)
+    set_velocity(speed / 2, speed + speed / 2)
+
 
 def turn_right():
     set_velocity(TURN_SPEED, -TURN_SPEED)
 
+
 def turn_right_stabilizing():
-    if before_command is None or before_command == 'stop':
+    if before_command is None or before_command == "stop":
         set_velocity(TURN_SPEED, -TURN_SPEED)
         return
-    if before_command == 'forward-fast':
+    if before_command == "forward-fast":
         speed = FORWARD_FAST_SPEED
-    elif before_command == 'forward-slow':
+    elif before_command == "forward-slow":
         speed = FORWARD_SLOW_SPEED
     else:
         speed = FORWARD_NORMAL_SPEED
-    set_velocity(speed + speed/2, speed/2)
+    set_velocity(speed + speed / 2, speed / 2)
 
 
 def stop():
@@ -285,7 +295,7 @@ def angle_diff(a, b):
 
 
 # ==== HTTP API ====
-current_command = 'stop'
+current_command = "stop"
 is_turning = False
 current_yaw = None
 command_queue = deque()
@@ -337,7 +347,7 @@ def set_motion(command):
         diff = angle_diff(current_yaw, current)
         if abs(diff) >= (math.pi / 2 - 0.01):
             stop()
-            current_command = 'stop'
+            current_command = "stop"
             is_turning = False
             current_yaw = None
             if command_queue:
@@ -351,13 +361,13 @@ def set_motion(command):
         diff = angle_diff(current_yaw, current)
         if (num is None) or (num <= 0):
             return
-        rate = 180/num
-        condition = (math.pi / rate - 0.01)
+        rate = 180 / num
+        condition = math.pi / rate - 0.01
 
         if abs(diff) >= condition:
             stop()
             if before_command is None:
-                current_command = 'stop'
+                current_command = "stop"
             else:
                 current_command = before_command
             stabilizing = False
@@ -369,82 +379,104 @@ def set_motion(command):
             time.sleep(0.001)
         return
 
-    if command == 'forward-slow':
+    if command == "forward-slow":
         before_command = command
         move_forward_slow()
-    elif command == 'forward':
+    elif command == "forward":
         before_command = command
         move_forward_normal()
-    elif command == 'forward-fast':
+    elif command == "forward-fast":
         before_command = command
         move_forward_fast()
-    elif command == 'left':
+    elif command == "left":
         before_command = command
         turn_left()
         is_turning = True
         current_yaw = get_current_robot_heading()
         return
-    elif command == 'right':
+    elif command == "right":
         before_command = command
         turn_right()
         is_turning = True
         current_yaw = get_current_robot_heading()
         return
-    elif command == 'back':
+    elif command == "back":
         before_command = command
         move_backward()
-    elif command == 'stop':
+        return
+    elif command == "stop":
         before_command = command
         stop()
         return
     import re
-    left_stabilization = re.match(r'^\s*(left)-([0-9]+\.[0-9]+)\s*$', command, re.IGNORECASE)
+
+    left_stabilization = re.match(
+        r"^\s*(left)-([0-9]+\.[0-9]+)\s*$", command, re.IGNORECASE
+    )
     if left_stabilization is not None:
         turn_left_stabilizing()
         stabilizing = True
-        num = float(left_stabilization.group(2)) if left_stabilization.group(2) is not None else None
+        num = (
+            float(left_stabilization.group(2))
+            if left_stabilization.group(2) is not None
+            else None
+        )
         current_yaw = get_current_robot_heading()
     else:
-        right_stabilization = re.match(r'^\s*(right)-([0-9]+\.[0-9]+)\s*$', command, re.IGNORECASE)
+        right_stabilization = re.match(
+            r"^\s*(right)-([0-9]+\.[0-9]+)\s*$", command, re.IGNORECASE
+        )
         if right_stabilization is not None:
             turn_right_stabilizing()
             stabilizing = True
-            num = float(right_stabilization.group(2)) if right_stabilization.group(2) is not None else None
+            num = (
+                float(right_stabilization.group(2))
+                if right_stabilization.group(2) is not None
+                else None
+            )
             current_yaw = get_current_robot_heading()
 
 
 app = Flask(__name__)
 
 
-@app.route('/control', methods=['POST'])
+@app.route("/control", methods=["POST"])
 def control():
     global current_command, is_turning
     data = request.json
-    command = data.get('command', '')
+    command = data.get("command", "")
     import re
 
-    if command in ['forward-slow', 'forward', 'forward-fast', 'left', 'right', 'back', 'stop']:
+    if command in [
+        "forward-slow",
+        "forward",
+        "forward-fast",
+        "left",
+        "right",
+        "back",
+        "stop",
+    ]:
         if is_turning:
             command_queue.append(command)
-            return {'status': 'queued', 'queue_length': len(command_queue)}
+            return {"status": "queued", "queue_length": len(command_queue)}
         else:
             current_command = command
-            return {'status': 'ok', 'command': current_command}
-    elif re.match(r'^\s*(?:left|right)-([0-9]+\.[0-9]+)\s*$', command, re.IGNORECASE):
+            return {"status": "ok", "command": current_command}
+    elif re.match(r"^\s*(?:left|right)-([0-9]+\.[0-9]+)\s*$", command, re.IGNORECASE):
         if not is_turning:
             current_command = command
-            return {'status': 'ok', 'command': current_command}
+            return {"status": "ok", "command": current_command}
     else:
-        return {'status': 'error', 'message': 'Invalid command'}, 400
+        return {"status": "error", "message": "Invalid command"}, 400
 
 
-@app.route('/current-robot-pose', methods=['GET'])
+@app.route("/current-robot-pose", methods=["GET"])
 def current_robot_pose():
     x, y = get_current_robot_pose()
     return {"status": "ok", "x": x, "y": y}
 
 
-@app.route('/current-robot-heading', methods=['GET'])
+@app.route("/current-robot-heading", methods=["GET"])
 def current_robot_heading():
     z = get_current_robot_heading()
     return {"status": "ok", "heading": z}
@@ -452,11 +484,11 @@ def current_robot_heading():
 
 def run_flask():
     print("🌐 Starting Flask server on http://0.0.0.0:6000")
-    app.run(host='0.0.0.0', port=6000, debug=False, use_reloader=False, threaded=True)
+    app.run(host="0.0.0.0", port=6000, debug=False, use_reloader=False, threaded=True)
 
 
 # ==== Redis client với connection pooling ====
-redis_pool = redis.ConnectionPool(host='127.0.0.1', port=6379, db=0, max_connections=2)
+redis_pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=0, max_connections=2)
 redis_client = redis.Redis(connection_pool=redis_pool)
 
 last_redis_publish = 0
@@ -467,11 +499,12 @@ random_delay = random.uniform(start, end)
 # map_supervisor = Supervisor()
 
 obstacle_topic = redis_client.pubsub()
-obstacle_topic.subscribe('obstacles')
+obstacle_topic.subscribe("obstacles")
 
 
 def parse_obstacles_message(message):
     import time, json
+
     data = json.loads(message.decode())
     obstacles = data.get("obstacles", [])
     result = []
@@ -486,7 +519,7 @@ def parse_obstacles_message(message):
             "object_id": int(obj.get("id", 0)),
             "conf": 0.95,
             "center": center,
-            "corners": bbox
+            "corners": bbox,
         }
         result.append(converted)
     return result
@@ -496,8 +529,6 @@ def publish_robot_and_obstacle_pose():
     global last_redis_publish, random_delay
     current_time = time.time()
 
-
-
     if current_time - last_redis_publish < random_delay:
         return
 
@@ -506,8 +537,8 @@ def publish_robot_and_obstacle_pose():
         msg = obstacle_topic.get_message(ignore_subscribe_messages=True)
         if msg is None:
             break  # Không có message mới -> dừng đọc
-        if msg['type'] == 'message':
-            obstacles = parse_obstacles_message(msg['data'])
+        if msg["type"] == "message":
+            obstacles = parse_obstacles_message(msg["data"])
     try:
         x, y = get_current_robot_pose()
         heading = get_current_robot_heading()
@@ -520,10 +551,10 @@ def publish_robot_and_obstacle_pose():
                     "object_id": random.randint(1, 10),
                     "yaw": heading,
                     "center": [x, y],
-                    "corners": []
+                    "corners": [],
                 }
             ],
-            "objects": obstacles
+            "objects": obstacles,
         }
         redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
         last_redis_publish = current_time
@@ -535,7 +566,7 @@ def publish_robot_and_obstacle_pose():
 
 
 # ==== Khởi tạo servers ====
-print('🤖 Starting Robot Controller...')
+print("🤖 Starting Robot Controller...")
 
 flask_thread = threading.Thread(target=run_flask, daemon=True)
 flask_thread.start()
@@ -546,23 +577,39 @@ opc_ua_started = server.start()
 if not opc_ua_started:
     print("⚠️  Warning: OPC UA server failed to start, continuing with Flask only")
 
-print('✅ Controller started with servers:')
-print('   - Flask API server at http://localhost:6000/control')
+print("✅ Controller started with servers:")
+print("   - Flask API server at http://localhost:6000/control")
 if opc_ua_started:
-    print('   - OPC UA server at opc.tcp://0.0.0.0:4840/freeopcua/server/')
+    print("   - OPC UA server at opc.tcp://0.0.0.0:4840/freeopcua/server/")
 
-print('🔄 Starting main simulation loop...')
+print("🔄 Starting main simulation loop...")
+# ==== Main Simulation Loop ====
+# This is the core control loop that runs continuously during the robot simulation.
+# It performs three main tasks each iteration:
+# 1. Advances the simulation by one timestep
+# 2. Publishes robot and obstacle position data to Redis
+# 3. Executes the current motion command
 
 try:
-    step_count = 0
+    step_count = 0  # Counter to track the number of simulation steps
+
+    # Main loop - continues until simulation is stopped (robot.step returns -1)
     while robot.step(timestep) != -1:
         step_count += 1
+
+        # Publish current robot pose and obstacle data to Redis stream
+        # This allows other systems to track the robot's position and nearby obstacles
         publish_robot_and_obstacle_pose()
+
+        # Execute the current motion command (forward, turn, stop, etc.)
+        # This function handles all movement logic including turning and stabilization
         set_motion(current_command)
 
 except KeyboardInterrupt:
-    print('\n🛑 Received interrupt signal, shutting down...')
+    # Gracefully handle Ctrl+C interruption
+    print("\n🛑 Received interrupt signal, shutting down...")
 finally:
+    # Cleanup: stop OPC UA server if it was successfully started
     if opc_ua_started:
         server.stop()
-    print('👋 Robot controller stopped')
+    print("👋 Robot controller stopped")
