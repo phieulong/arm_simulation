@@ -417,7 +417,12 @@ if __name__ == "__main__":
 
     # track time for periodic actions
     last_publish_time = time.time()
-    publisher_thread = None
+    publisher_thread = threading.Thread(
+        target=publish_robot_and_obstacles,
+        args=(root_supervisor,),
+        daemon=True,
+    )
+    publisher_thread.start()
     while root_supervisor.step(timestep) != -1:
         # compute current time at start of iteration
         now = time.time()
@@ -429,25 +434,7 @@ if __name__ == "__main__":
             angle_range=(5, 10)
         )
 
-        # Publish apriltags/robots at most once every PUBLISH_INTERVAL seconds
-        # if now - last_publish_time >= PUBLISH_INTERVAL:
-        #     last_publish_time = now
-            # avoid overlapping publishes: only start a new thread if previous finished
-        if publisher_thread is None or not publisher_thread.is_alive():
-            publisher_thread = threading.Thread(
-                target=publish_robot_and_obstacles,
-                args=(root_supervisor,),
-                daemon=True,
-            )
-            publisher_thread.start()
-            # else:
-                # previous publish still running; skip this interval
-                # print("Publish still running, skipping this interval")
-
         loop_count += 1
 
-
-
-        # Giảm CPU usage
 
     print("Webots simulation ended")
