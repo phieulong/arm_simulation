@@ -1,6 +1,5 @@
 import json
 from controller import Supervisor
-import requests
 import redis
 import threading
 import time
@@ -32,6 +31,7 @@ app = Flask(__name__)
 
 def get_node_size(node):
     """Lấy kích thước của node dựa trên type"""
+    node_type = '<unknown>'
     try:
         node_type = node.getTypeName()
         if node_type in ["ConveyorBelt", "WoodenPallet"]:
@@ -59,13 +59,52 @@ def calculate_bbox(translation, size):
         [bx + bl / 2, by - bw / 2],  # bottom-right
         [bx + bl / 2, by + bw / 2],  # top-right
     ]
-robot_0_topic = redis_client.pubsub()
-robot_0_topic.subscribe("robot_0")
+
+# robot_0_topic = redis_client.pubsub()
+# robot_0_topic.subscribe("robot_0")
+#
+#
+# robot_1_topic = redis_client.pubsub()
+# robot_1_topic.subscribe("robot_1")
+#
+# robot_2_topic = redis_client.pubsub()
+# robot_2_topic.subscribe("robot_2")
 
 def parse_robot_message(message):
     import json
     data = json.loads(message.decode())
     return data.get("robot", {})
+
+def fetch_current_robot_api(robot_id=0, timeout=2):
+    import urllib.request
+    import urllib.error
+    """
+    Fetch the current robot from the local API `GET /current-robot`.
+    Returns the robot dict on success or an empty dict on failure.
+    Uses urllib to avoid needing the `requests` package.
+    The function expects the target service to be on port 6060 (the map/HTTP server).
+    """
+    url = f"http://localhost:600{robot_id}/current-robot"
+    try:
+        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode("utf-8")
+            try:
+                payload = json.loads(body)
+            except Exception as e:
+                print(f"Error parsing JSON from {url}: {e} -- body={body}")
+                return {}
+
+            # The API returns an object with key "robot" according to your description.
+            if isinstance(payload, dict):
+                return payload.get("robot", {})
+            return {}
+    except urllib.error.URLError as e:
+        print(f"Network error fetching robot data from {url}: {e}")
+    except Exception as e:
+        print(f"Unexpected error fetching robot data from {url}: {e}")
+
+    return {}
 
 def publish_robot_and_obstacles(supervisor = root_supervisor):
     global last_redis_publish, random_delay
@@ -76,20 +115,40 @@ def publish_robot_and_obstacles(supervisor = root_supervisor):
         # supervisor.simulationResetPhysics()
         # supervisor.step(0)  # Đảm bảo supervisor cập nhật trạng thái
         # --- Arena ---
-        if now - last_redis_publish < random_delay:
-            return None
+        # if now - last_redis_publish < random_delay:
+        #     return None
         arena = supervisor.getFromDef("rectangle_arena")
         if not arena:
             print("Warning: rectangle_arena not found")
             return None
 
-        robot_0 = {}
-        while True:
-            msg = robot_0_topic.get_message(ignore_subscribe_messages=True)
-            if msg is None:
-                break
-            if msg["type"] == "message":
-                robot_0 = parse_robot_message(msg["data"])
+        robot_0 = fetch_current_robot_api(0)
+        # while True:
+        #     msg = robot_0_topic.get_message(ignore_subscribe_messages=True)
+        #     if msg is None:
+        #         break
+        #     if msg["type"] == "message":
+        #         robot_0 = parse_robot_message(msg["data"])
+
+        robot_1 = fetch_current_robot_api(1)
+        # while True:
+        #     msg = robot_1_topic.get_message(ignore_subscribe_messages=True)
+        #     if msg is None:
+        #         break
+        #     if msg["type"] == "message":
+        #         robot_1 = parse_robot_message(msg["data"])
+
+
+        robot_2 = fetch_current_robot_api(2)
+        # while True:
+        #     msg = robot_2_topic.get_message(ignore_subscribe_messages=True)
+        #     if msg is None:
+        #         break
+        #     if msg["type"] == "message":
+        #         robot_2 = parse_robot_message(msg["data"])
+
+
+        robot_3  = fetch_current_robot_api(3)
 
         arena_size = arena.getField("floorSize").getSFVec2f()
         w, h = arena_size[0], arena_size[1]
@@ -125,11 +184,12 @@ def publish_robot_and_obstacles(supervisor = root_supervisor):
             except Exception as e:
                 print(f"Error processing node {i}: {e}")
                 continue
-        message = {"april_tags": [robot_0], "objects": obstacles}
+        message = {"april_tags": [robot_0, robot_1, robot_2, robot_3], "objects": obstacles}
+        # print(f"message: {message}")
         redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
         last_redis_publish = now
-        start, end = REDIS_PUBLISH_INTERVAL
-        random_delay = random.uniform(start, end)
+        # s, e = REDIS_PUBLISH_INTERVAL
+        # random_delay = random.uniform(s, e)
     except Exception as e:
         print(f"Error publishing apriltags and robots: {e}")
         return None
@@ -387,9 +447,13 @@ if __name__ == "__main__":
     loop_count = 0
     last_publish = 0
 
-    current_time = time.time()
-    last_publish_time = 0.0
+    # track time for periodic actions
+    last_publish_time = time.time()
+    publisher_thread = None
     while root_supervisor.step(timestep) != -1:
+        # compute current time at start of iteration
+        now = time.time()
+
         rotate_near_manhole_objects(
             supervisor=root_supervisor,
             robot_def="Pioneer_3-AT",
@@ -397,26 +461,24 @@ if __name__ == "__main__":
             angle_range=(5, 10)
         )
 
-        if current_time - last_publish_time >= PUBLISH_INTERVAL:
-            last_publish_time = current_time
-            publish_robot_and_obstacles()
+        # Publish apriltags/robots at most once every PUBLISH_INTERVAL seconds
+        # if now - last_publish_time >= PUBLISH_INTERVAL:
+        #     last_publish_time = now
+            # avoid overlapping publishes: only start a new thread if previous finished
+        if publisher_thread is None or not publisher_thread.is_alive():
+            publisher_thread = threading.Thread(
+                target=publish_robot_and_obstacles,
+                args=(root_supervisor,),
+                daemon=True,
+            )
+            publisher_thread.start()
+            # else:
+                # previous publish still running; skip this interval
+                # print("Publish still running, skipping this interval")
 
-        current_time = time.time()
         loop_count += 1
 
-        # Refresh cache mỗi 5 giây hoặc 1000 loops (tùy cái nào đến trước)
-        if (current_time - last_cache_refresh > 5.0):
-            # Chạy refresh trong thread riêng để không block simulation
-            def background_refresh():
-                try:
-                    get_cached_map()
-                except Exception as e:
-                    print(f"Background cache refresh error: {e}")
 
-
-            refresh_thread = threading.Thread(target=background_refresh, daemon=True)
-            refresh_thread.start()
-            last_cache_refresh = current_time
 
         # Giảm CPU usage
 

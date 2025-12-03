@@ -42,7 +42,7 @@ imu.enable(timestep)
 
 
 class RobotCommandServer:
-    def __init__(self, endpoint="opc.tcp://0.0.0.0:4840/freeopcua/server/"):
+    def __init__(self, endpoint="opc.tcp://0.0.0.0:4842/freeopcua/server/"):
         self.server = Server()
         self.endpoint = endpoint
         self.message_var = None
@@ -314,8 +314,6 @@ IMU_UPDATE_INTERVAL = 0.05
 
 
 def get_current_robot_pose():
-    # gps_values = gps.getValues()
-    # return gps_values[0], gps_values[1]
     global last_gps_update, cached_gps_data
     current_time = time.time()
 
@@ -328,11 +326,6 @@ def get_current_robot_pose():
 
 
 def get_current_robot_heading():
-    # rpy = imu.getRollPitchYaw()
-    # yaw = rpy[2]
-    # yaw = round(yaw, 6) + 1.570798
-    # cached_heading = math.atan2(math.sin(yaw), math.cos(yaw))
-    # return cached_heading
     global last_imu_update, cached_heading
     current_time = time.time()
 
@@ -488,6 +481,7 @@ def current_robot_heading():
     z = get_current_robot_heading()
     return {"status": "ok", "heading": z}
 
+
 @app.route("/current-robot", methods=["GET"])
 def get_current_robot():
     try:
@@ -496,8 +490,8 @@ def get_current_robot():
 
         current_robot = {
             "timestamp": time.time_ns(),
-            "camera_id": 0,
-            "object_id": 0,
+            "camera_id": 2,
+            "object_id": 2,
             "yaw": heading,
             "center": [x, y],
             "corners": [],
@@ -510,16 +504,14 @@ def get_current_robot():
     except Exception as e:
         print(f"Redis publish error: {e}")
 
-
 def run_flask():
-    print("🌐 Starting Flask server on http://0.0.0.0:6000")
-    app.run(host="0.0.0.0", port=6000, debug=False, use_reloader=False, threaded=True)
+    print("🌐 Starting Flask server on http://0.0.0.0:6002")
+    app.run(host="0.0.0.0", port=6002, debug=False, use_reloader=False, threaded=True)
 
 
 # ==== Redis client với connection pooling ====
 redis_pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=0, max_connections=2)
 redis_client = redis.Redis(connection_pool=redis_pool)
-
 
 
 def publish_current_pose():
@@ -529,14 +521,14 @@ def publish_current_pose():
 
         current_robot = {
             "timestamp": time.time_ns(),
-            "camera_id": 0,
-            "object_id": 0,
+            "camera_id": 2,
+            "object_id": 2,
             "yaw": heading,
             "center": [x, y],
             "corners": [],
         }
         current_robot_message = json.dumps({"robot": current_robot})
-        redis_client.publish("robot_0", current_robot_message)
+        redis_client.publish("robot_2", current_robot_message)
     except Exception as e:
         print(f"Redis publish error: {e}")
 
@@ -554,9 +546,9 @@ if not opc_ua_started:
     print("⚠️  Warning: OPC UA server failed to start, continuing with Flask only")
 
 print("✅ Controller started with servers:")
-print("   - Flask API server at http://localhost:6000/control")
+print("   - Flask API server at http://localhost:6002/control")
 if opc_ua_started:
-    print("   - OPC UA server at opc.tcp://0.0.0.0:4840/freeopcua/server/")
+    print("   - OPC UA server at opc.tcp://0.0.0.0:4842/freeopcua/server/")
 
 print("🔄 Starting main simulation loop...")
 # ==== Main Simulation Loop ====

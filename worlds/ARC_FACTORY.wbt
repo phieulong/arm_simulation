@@ -18,9 +18,10 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.4195780693448665 -0.415256821697937 -0.8071654203186371 4.489674240265225
-  position 19.15543564168841 2.115871134396187 14.815345081529422
+  orientation 0.483086202409612 -0.48291606606317655 -0.730355936636052 4.402876957417997
+  position 13.914809745438962 -1.1008300390496855 23.411666140460046
   follow "Pioneer 3-AT_0"
+  followType "None"
 }
 TexturedBackground {
 }
@@ -35,8 +36,8 @@ DEF rectangle_arena RectangleArena {
   }
 }
 Pedestrian {
-  translation 14.24 8.57002 1.27
-  rotation 0 0 1 1.5708
+  translation 11.06 7.31002 1.27
+  rotation 0 0 1 -3.1415853071795863
 }
 Pedestrian {
   translation 16.3842 17.72 1.28
@@ -68,94 +69,78 @@ PlasticFruitBox {
 DEF MY_ROBOT Khepera4 {
   hidden position_0_0 4751.973588222946
   hidden position_0_1 4740.623181432466
-  hidden linearVelocity_0 -1.200704332723754e-15 7.871642897136827e-16 7.620964670857404e-10
-  hidden angularVelocity_0 -1.4656848467737747e-15 2.446253040961619e-15 2.764520186594477e-16
   hidden translation_1 1.7412591763955415e-12 -4.1855166363423165e-12 5.972901861392211e-13
   hidden rotation_1 -0.6456660723263083 0.6456661345987382 -0.4077138281675551 2.3673156968048206
   hidden rotation_2 -0.5272668209154883 0.527266891476428 -0.666317735554487 1.9660706483049293
-  hidden linearVelocity_2 -4.7560302643158336e-15 2.8886443730378753e-15 1.4969143948295737e-05
-  hidden angularVelocity_2 -1.8927833967726902e-13 -3.0715629924738566e-13 9.701438589092897e-16
   hidden rotation_3 -0.706935798787561 0.7069358392794246 0.021988531894798435 3.1855627180050266
-  hidden linearVelocity_3 -1.6195528062872612e-16 1.6114917649546289e-16 1.4969137819154101e-05
-  hidden angularVelocity_3 9.357400904665229e-15 8.169619653998426e-15 1.6659527236974547e-15
-  translation 29.988119878762603 20.08011397911742 -0.00016052541979032567
-  rotation -5.292185277675602e-10 -2.9709559197299946e-10 1 1.0230885683117457
+  translation 29.988119878763243 20.08011397911685 -0.00016050090698118552
+  rotation -5.289577694731712e-10 -2.969488754495953e-10 1 1.0230885683116933
   controller "<none>"
 }
 DEF left_big_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 17.8 15 0
   rotation 0 0 -1 0
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 21 15 0
   rotation 0 0 -1 0
   name "conveyor belt(11)"
   size 1 5 1.5
 }
 DEF left_small_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 0.7477322083220778
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556131557121
   translation 13.33 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(3)"
   size 1 4 1
 }
 DEF left_big_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 14.5 15 0
   rotation 0 0 -1 0
   name "conveyor belt(4)"
   size 1 5 1.5
 }
 DEF left_small_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 0.7477322081308945
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129645288
   translation 16.6 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(1)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 19.8 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(10)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 23 6 0
   rotation 0 0 -1 0
   name "conveyor belt(2)"
   size 1 4 1
 }
 DEF right_big_conveyor_belt_6 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 21.8 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(5)"
   size 1 5 1.5
 }
 ConveyorBelt {
-  hidden translation_1 0 0 0.4477322081306352
-  hidden linearVelocity_1 0 0 -7.849224718017923e-05
+  hidden translation_1 0 0 0.4473556129642685
   translation 27.8449 2.58127 0
   rotation 0 0 -1 0
   name "conveyor belt(12)"
   size 4 4 0.6
 }
 DEF right_small_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 19.8 6 0
   rotation 0 0 -1 0
   name "conveyor belt(6)"
@@ -196,120 +181,105 @@ WoodenPallet {
   size 2 1 0.1
 }
 DEF right_big_conveyor_belt_5 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 18.5 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(7)"
   size 1 5 1.5
 }
 DEF right_small_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 16.46 6 0
   rotation 0 0 -1 0
   name "conveyor belt(8)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 0.747732208295254
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556131288883
   translation 13.22 6 0
   rotation 0 0 -1 0
   name "conveyor belt(14)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 6.9 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(21)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 3.7 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(23)"
   size 1 4 1
 }
 DEF left_small_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 10.1 14.5 0
   rotation 0 0 -1 0
   name "conveyor belt(19)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 10 6 0
   rotation 0 0 -1 0
   name "conveyor belt(15)"
   size 1 4 1
 }
 DEF right_small_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 0.74773220813064
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 0.7473556129642743
   translation 7 6 0
   rotation 0 0 -1 0
   name "conveyor belt(17)"
   size 1 4 1
 }
 DEF right_big_conveyor_belt_4 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 15.3 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(9)"
   size 1 5 1.5
 }
 DEF right_big_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 12 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(13)"
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_3 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 11.3 15 0
   rotation 0 0 -1 0
   name "conveyor belt(20)"
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 8.1 15 0
   rotation 0 0 -1 0
   name "conveyor belt(22)"
   size 1 5 1.5
 }
 DEF left_big_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 4.9 15 0
   rotation 0 0 -1 0
   name "conveyor belt(24)"
   size 1 5 1.5
 }
 DEF right_big_conveyor_belt_2 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 8.8 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(16)"
   size 1 5 1.5
 }
 DEF right_big_conveyor_belt_1 ConveyorBelt {
-  hidden translation_1 0 0 1.1227322081306474
-  hidden linearVelocity_1 0 0 -7.84922471805203e-05
+  hidden translation_1 0 0 1.1223556129642829
   translation 5.8 5.5 0
   rotation 0 0 -1 0
   name "conveyor belt(18)"
@@ -381,7 +351,7 @@ CardboardBox {
   size 0.2 0.2 0.2
 }
 CardboardBox {
-  translation 18.9049 8.9223 0.11
+  translation 18.9049 8.5223 0.11
   rotation 0 0 1 1.5708
   name "cardboard box(4)"
   size 0.2 0.2 0.2
@@ -393,19 +363,19 @@ CardboardBox {
   size 0.2 0.2 0.2
 }
 CardboardBox {
-  translation 17.8949 8.8323 0.11
+  translation 17.8549 8.8323 0.11
   rotation 0 0 1 1.5708
   name "cardboard box(16)"
   size 0.2 0.2 0.2
 }
 CardboardBox {
-  translation 17.0649 10.8823 0.11
+  translation 17.5949 12.1823 0.11
   rotation 0 0 1 1.5708
   name "cardboard box(17)"
   size 0.2 0.2 0.2
 }
 CardboardBox {
-  translation 17.0649 9.8323 0.11
+  translation 17.0749 11.9123 0.11
   rotation 0 0 1 1.5708
   name "cardboard box(18)"
   size 0.2 0.2 0.2
@@ -436,74 +406,125 @@ DEF SUPERVISOR Robot {
   supervisor TRUE
 }
 DEF Pioneer_3-AT Pioneer3at {
-  hidden position_0_0 17181.45939255536
-  hidden position_0_1 14901.574098272167
-  hidden position_0_2 17201.19689318821
-  hidden position_0_3 14923.381756193097
-  hidden linearVelocity_0 2.6620385792622843e-09 4.9625672189915806e-11 8.897448163803678e-07
-  hidden angularVelocity_0 -3.367926499770586e-10 1.4646303184153987e-08 -2.1065058164354327e-10
+  hidden position_0_0 17181.675594693075
+  hidden position_0_1 14901.686209676143
+  hidden position_0_2 17201.273770407897
+  hidden position_0_3 14922.746013003038
+  hidden linearVelocity_0 -1.5987671287863815e-12 -1.4383483947764826e-14 1.5502750598402187e-16
+  hidden angularVelocity_0 -2.119656634249515e-15 4.157583025452756e-15 -2.7798823085564746e-15
   hidden rotation_1 0.5773516024134749 -0.5773476024162304 -0.5773516027299337 2.094404999683543
   hidden translation_2 4.390430234023778e-13 2.1847962280823109e-13 0.04999999999999215
   hidden rotation_2 -0.42526537133496617 0.425258256650912 -0.7989397843977734 1.7934126943521096
-  hidden rotation_3 0.6317659160675348 -0.6317609173323453 -0.4491658609319526 2.29728388004452
-  hidden linearVelocity_3 1.5900186565917616e-09 -8.56970171465388e-11 0.0001729126180582341
-  hidden angularVelocity_3 1.2546977842273337e-09 1.4660482327885211e-08 -2.0993556256725535e-10
-  hidden rotation_4 -0.35548289811309836 0.3554821682557826 0.8644445252306708 4.567221669050042
-  hidden linearVelocity_4 1.621712822147649e-09 -5.190848627796282e-12 0.0001728969078125431
-  hidden angularVelocity_4 6.295064673234156e-11 1.4653162177135167e-08 -2.0993424467014788e-10
-  hidden rotation_5 0.04381472569416281 -0.04381087453483026 0.9980785926392965 4.710455542239624
-  hidden linearVelocity_5 1.5876207441313734e-09 1.1090564809228025e-10 0.00017420004003696477
-  hidden angularVelocity_5 -1.3462863820236642e-09 1.4629200870687589e-08 -2.0993527251744719e-10
-  hidden rotation_6 -0.10401575843329734 0.10401805154163753 0.9891213105332566 4.701440212785287
-  hidden linearVelocity_6 1.6206558185304467e-09 8.076585920074348e-11 0.00017418432956439744
-  hidden angularVelocity_6 -8.92210507851396e-10 1.4641677519107198e-08 -2.099356309680177e-10
-  translation 22.14098293709266 10.886969319158556 -0.0023889850045034078
-  rotation -2.458854514991519e-05 -3.504224415706664e-07 0.9999999996976403 -3.1295647707151097
+  hidden rotation_3 0.598840410331843 -0.5988360331041608 -0.5317758629438369 2.164116442399239
+  hidden linearVelocity_3 -1.571567960561134e-12 2.6259246751611168e-14 -7.105425721058636e-16
+  hidden angularVelocity_3 -6.493812832899151e-15 -3.5342707750546017e-12 4.1455072942521074e-14
+  hidden rotation_4 -0.31158685460421404 0.311586691492467 0.8976788767274357 4.6046436696101525
+  hidden linearVelocity_4 -1.60662836109083e-12 2.3478743904242504e-14 4.2629264690391085e-16
+  hidden angularVelocity_4 -3.9490469248268425e-14 -2.2210665915804565e-11 2.685102888433062e-13
+  hidden rotation_5 0.08194016341117874 -0.0819359346916556 0.9932634656657586 4.705619652586004
+  hidden linearVelocity_5 -1.5717432807476326e-12 -1.7119015139816537e-14 7.105209557422041e-16
+  hidden angularVelocity_5 -3.13238202756552e-14 -1.8096778258237243e-11 2.168295515027497e-13
+  hidden rotation_6 -0.37949227391109086 0.37949122561509363 0.8437843466922954 4.543329899876239
+  hidden linearVelocity_6 -1.6063203218162306e-12 -2.3373132704765174e-14 4.973842024025574e-16
+  hidden angularVelocity_6 -4.5366709793448244e-15 -2.560465325247829e-12 2.7154676370245e-14
+  translation 21.47478939473765 10.903092575111858 0.00035798223039304466
+  rotation 0.009578648050089648 0.006087279749779475 0.9999355951894005 3.1400406406087185
   name "Pioneer 3-AT_0"
   controller "pioneer_controller"
+}
+DEF Pioneer_3-AT Pioneer3at {
+  hidden position_0_0 17180.781322598606
+  hidden position_0_1 14902.012855461306
+  hidden position_0_2 17201.443178757665
+  hidden position_0_3 14923.74740812074
+  hidden linearVelocity_0 1.9423588775594198e-14 3.9281788049622627e-16 -2.0670334131202914e-16
+  hidden angularVelocity_0 6.841262889963557e-16 8.774132269195089e-18 2.3972402048756765e-16
+  hidden rotation_1 0.5773516024134749 -0.5773476024162304 -0.5773516027299337 2.094404999683543
+  hidden translation_2 4.390430234023778e-13 2.1847962280823109e-13 0.04999999999999215
+  hidden rotation_2 -0.42526537133496617 0.425258256650912 -0.7989397843977734 1.7934126943521096
+  hidden rotation_3 0.6930327126565953 -0.6930262274910036 -0.1985454789146026 2.749607958721191
+  hidden linearVelocity_3 2.489252750110745e-14 5.183074421642929e-15 -4.26313060828292e-16
+  hidden angularVelocity_3 7.272539132828362e-15 6.708330285500525e-17 3.1417289932818744e-15
+  hidden rotation_4 -0.16753776453864103 0.16753934135083978 0.9715254327875937 4.683494249951609
+  hidden linearVelocity_4 -4.901421162255398e-15 -7.663190927885676e-15 -1.4214767290833477e-16
+  hidden angularVelocity_4 5.891858035636595e-15 -4.6479265747772466e-15 3.205534275726301e-15
+  hidden rotation_5 0.16398799792021798 -0.1639829912802124 0.9727371253884125 4.684741341685563
+  hidden linearVelocity_5 -1.2120913530365026e-14 6.8806652342207544e-15 4.263206828775879e-16
+  hidden angularVelocity_5 8.812233813832533e-15 -3.4454004763917595e-15 3.229630429892769e-15
+  hidden rotation_6 0.07773614758006425 -0.07773195999933394 0.9939390493154359 4.706299558327079
+  hidden linearVelocity_6 -7.840060219225805e-15 -8.124872446463493e-15 -2.841982236539494e-16
+  hidden angularVelocity_6 1.205534962411907e-14 5.989180416011727e-15 3.228620162065299e-15
+  translation 14.256699999175627 5.304799941433329 -0.0023889310687115195
+  rotation -2.4736974944192078e-05 2.4823257147235935e-05 0.999999999385944 1.5554589199640467
+  name "Pioneer 3-AT_1"
+  controller "pioneer_controller_1"
+}
+DEF Pioneer_3-AT Pioneer3at {
+  hidden position_0_0 17180.45444715848
+  hidden position_0_1 14901.654051322048
+  hidden position_0_2 17201.222966232806
+  hidden position_0_3 14923.432877863992
+  hidden linearVelocity_0 5.028692897696646e-15 5.366026902177506e-15 5.1675835328007286e-17
+  hidden angularVelocity_0 -3.637962864018927e-16 7.816717333046506e-16 3.116986779095353e-15
+  hidden rotation_1 0.5773516024134749 -0.5773476024162304 -0.5773516027299337 2.094404999683543
+  hidden translation_2 4.390430234023778e-13 2.1847962280823109e-13 0.04999999999999215
+  hidden rotation_2 -0.42526537133496617 0.425258256650912 -0.7989397843977734 1.7934126943521096
+  hidden rotation_3 0.7047396539089154 -0.70473265031596 -0.08181632958636516 2.9783300960666255
+  hidden linearVelocity_3 1.590092971520525e-14 -2.4412325914178637e-14 7.106203508273706e-17
+  hidden angularVelocity_3 -1.854860871108069e-20 -4.939769183642458e-15 3.72552136546329e-15
+  hidden rotation_4 -0.3244944453718878 0.3244941175819681 0.8884857469748689 4.594415341639256
+  hidden linearVelocity_4 -1.6661719785486838e-14 -2.3952040206411347e-14 1.4210194518259978e-16
+  hidden angularVelocity_4 -4.702983199985737e-15 -4.631258450852761e-16 5.3307698361208756e-15
+  hidden rotation_5 0.05678495690133905 -0.05678097617286579 0.9967704798069462 4.709144100515489
+  hidden linearVelocity_5 1.5884536493959542e-14 2.3637773512068696e-14 3.55266314275702e-16
+  hidden angularVelocity_5 4.7030077807972215e-15 -5.172611056412874e-15 1.8000070244165644e-15
+  hidden rotation_6 -0.07888441335464842 0.07888698193497336 0.9937575626936804 4.7061164152493715
+  hidden linearVelocity_6 -1.735310461266238e-14 2.3989717265310843e-14 -1.9523823680691047e-20
+  hidden angularVelocity_6 3.5272871266565684e-15 -9.731853355300062e-15 2.715707742273487e-15
+  translation 11.179800018381409 9.696709999980927 -0.0023889310679025
+  rotation -0.007213078514908145 0.9999701234430958 -0.0027791580626808266 4.917939533441362e-05
+  name "Pioneer 3-AT_2"
+  controller "pioneer_controller_2"
+}
+DEF Pioneer_3-AT Pioneer3at {
+  hidden position_0_0 17180.454407198027
+  hidden position_0_1 14901.654013182535
+  hidden position_0_2 17201.223047223113
+  hidden position_0_3 14923.432960390635
+  hidden linearVelocity_0 2.2845748192686972e-10 -2.2673935147144746e-14 4.012317524691091e-10
+  hidden angularVelocity_0 9.18296968003358e-14 1.2473436235545882e-09 -4.53914460941666e-14
+  hidden rotation_1 0.5773516024134749 -0.5773476024162304 -0.5773516027299337 2.094404999683543
+  hidden translation_2 4.390430234023778e-13 2.1847962280823109e-13 0.04999999999999215
+  hidden rotation_2 -0.42526537133496617 0.425258256650912 -0.7989397843977734 1.7934126943521096
+  hidden rotation_3 0.7047404766946084 -0.7047334730448872 -0.08180215448475328 2.978358257519827
+  hidden linearVelocity_3 1.4351407106228518e-10 -1.0374499528837133e-12 2.1376354908230423e-09
+  hidden angularVelocity_3 -2.5385305143405966e-14 1.2486897772608307e-09 -4.620070923670363e-14
+  hidden rotation_4 -0.3245096043605397 0.324509276376279 0.8884746739347777 4.594402965302564
+  hidden linearVelocity_4 1.4272682024425088e-10 -1.0912053358162719e-13 2.1374757608063783e-09
+  hidden angularVelocity_4 8.112669615331724e-14 1.2485317443896692e-09 -4.6819249933257545e-14
+  hidden rotation_5 0.056825190944275836 -0.056821209815676156 0.996765894174369 4.70913950017754
+  hidden linearVelocity_5 1.3153481658389893e-10 8.001319743809999e-13 1.8188917038841048e-09
+  hidden angularVelocity_5 1.91494161522988e-13 1.246116010300861e-09 -4.5756703018398476e-14
+  hidden rotation_6 -0.07884366252632202 0.07884623154975284 0.9937640306681654 4.706122923845709
+  hidden linearVelocity_6 1.3074694127116552e-10 3.047861456617569e-13 1.818730908102486e-09
+  hidden angularVelocity_6 1.3544659046997721e-13 1.24594941825045e-09 -4.4076785215829123e-14
+  translation 7.471689997050197 9.70052999999585 -0.0023889311206066466
+  rotation -0.007210751518766457 0.9997479779325698 -0.021259954898175157 4.919014330537362e-05
+  name "Pioneer 3-AT_3"
+  controller "pioneer_controller_3"
 }
 SquareManhole {
   translation 25 19 0
 }
 SquareManhole {
-  translation 16.5765 10.8585 -0.04
-  rotation 0 0 1 0.261799
-  name "manhole(3)"
-}
-SquareManhole {
-  translation 20.8808 10.7433 -0.04
-  rotation 0 0 1 -0.523595307179586
-  name "manhole(4)"
-}
-SquareManhole {
-  translation 19.322 9.46099 -0.04
+  translation 19.092 9.85948 -0.04
   rotation 0 0 1 0.523602
   name "manhole(16)"
 }
 SquareManhole {
-  translation 20.8374 9.33171 -0.04
+  translation 20.7736 10.6536 -0.04
   rotation 0 0 1 0.785401
   name "manhole(17)"
-}
-SquareManhole {
-  translation 17.6513 9.65158 -0.04
-  rotation 0 0 1 0.261803
-  name "manhole(5)"
-}
-SquareManhole {
-  translation 18.2032 10.8667 -0.04
-  rotation 0 0 1 1.0472
-  name "manhole(18)"
-}
-SquareManhole {
-  translation 16.2666 9.51571 -0.04
-  rotation 0 0 1 2.3562
-  name "manhole(19)"
-}
-SquareManhole {
-  translation 9.11491 10.7335 -0.02
-  rotation 0 0 1 0.523604
-  name "manhole(8)"
 }
 SquareManhole {
   translation 9.00273 9.46782 -0.02
@@ -511,24 +532,9 @@ SquareManhole {
   name "manhole(12)"
 }
 SquareManhole {
-  translation 7.01491 10.2135 -0.03
-  rotation 0 0 1 -0.523595307179586
-  name "manhole(9)"
-}
-SquareManhole {
-  translation 5.47928 11.0337 -0.04
-  rotation -2.61995e-08 -2.61996e-08 1 0.523603
-  name "manhole(10)"
-}
-SquareManhole {
   translation 4.9337 9.8387 -0.04
   rotation 9.58978e-09 3.57898e-08 1 -0.523595307179586
   name "manhole(11)"
-}
-SquareManhole {
-  translation 19.5044 10.8437 -0.04
-  rotation 0 0 1 -1.8325953071795862
-  name "manhole(2)"
 }
 WoodenPallet {
   translation 6 8.7 0

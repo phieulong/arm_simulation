@@ -481,6 +481,28 @@ def current_robot_heading():
     z = get_current_robot_heading()
     return {"status": "ok", "heading": z}
 
+@app.route("/current-robot", methods=["GET"])
+def get_current_robot():
+    try:
+        x, y = get_current_robot_pose()
+        heading = get_current_robot_heading()
+
+        current_robot = {
+            "timestamp": time.time_ns(),
+            "camera_id": 1,
+            "object_id": 1,
+            "yaw": heading,
+            "center": [x, y],
+            "corners": [],
+        }
+        return {"status": "ok", "robot": current_robot}
+
+
+    #     current_robot_message = json.dumps({"robot": current_robot})
+    #     redis_client.publish("robot_0", current_robot_message)
+    except Exception as e:
+        print(f"Redis publish error: {e}")
+
 
 def run_flask():
     print("🌐 Starting Flask server on http://0.0.0.0:6001")
@@ -491,76 +513,23 @@ def run_flask():
 redis_pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=0, max_connections=2)
 redis_client = redis.Redis(connection_pool=redis_pool)
 
-last_redis_publish = 0
-REDIS_PUBLISH_INTERVAL = (0.1, 0.3)
-start, end = REDIS_PUBLISH_INTERVAL
-random_delay = random.uniform(start, end)
-
-# map_supervisor = Supervisor()
-
-obstacle_topic = redis_client.pubsub()
-obstacle_topic.subscribe("obstacles")
 
 
-def parse_obstacles_message(message):
-    import time, json
-
-    data = json.loads(message.decode())
-    obstacles = data.get("obstacles", [])
-    result = []
-    timestamp_str = str(int(time.time() * 1000))
-    for obj in obstacles:
-        bbox = obj.get("bbox", {})
-        center = obj.get("center", {})
-        converted = {
-            "timestamp": timestamp_str,
-            "camera_id": 0,
-            "class": "static",
-            "object_id": int(obj.get("id", 0)),
-            "conf": 0.95,
-            "center": center,
-            "corners": bbox,
-        }
-        result.append(converted)
-    return result
-
-
-def publish_robot_and_obstacle_pose():
-    global last_redis_publish, random_delay
-    current_time = time.time()
-
-    if current_time - last_redis_publish < random_delay:
-        return
-
-    obstacles = []
-    while True:
-        msg = obstacle_topic.get_message(ignore_subscribe_messages=True)
-        if msg is None:
-            break  # Không có message mới -> dừng đọc
-        if msg["type"] == "message":
-            obstacles = parse_obstacles_message(msg["data"])
+def publish_current_pose():
     try:
         x, y = get_current_robot_pose()
         heading = get_current_robot_heading()
 
-        message = {
-            "april_tags": [
-                {
-                    "timestamp": time.time_ns(),
-                    "camera_id": 1,
-                    "object_id": 1,
-                    "yaw": heading,
-                    "center": [x, y],
-                    "corners": [],
-                }
-            ],
-            "objects": obstacles,
+        current_robot = {
+            "timestamp": time.time_ns(),
+            "camera_id": 1,
+            "object_id": 1,
+            "yaw": heading,
+            "center": [x, y],
+            "corners": [],
         }
-        redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
-        last_redis_publish = current_time
-        start, end = REDIS_PUBLISH_INTERVAL
-        random_delay = random.uniform(start, end)
-
+        current_robot_message = json.dumps({"robot": current_robot})
+        redis_client.publish("robot_1", current_robot_message)
     except Exception as e:
         print(f"Redis publish error: {e}")
 
@@ -599,7 +568,7 @@ try:
 
         # Publish current robot pose and obstacle data to Redis stream
         # This allows other systems to track the robot's position and nearby obstacles
-        publish_robot_and_obstacle_pose()
+        # publish_current_pose()
 
         # Execute the current motion command (forward, turn, stop, etc.)
         # This function handles all movement logic including turning and stabilization
