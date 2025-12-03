@@ -7,6 +7,8 @@ import threading
 import time
 from flask import Flask
 import random
+import psycopg2
+from psycopg2 import sql
 
 # --- Cấu hình bản đồ ---
 API_URL = "http://localhost:6060/map"
@@ -196,6 +198,8 @@ def get_map(supervisor = root_supervisor):
                     obstacles.append({
                         "id": str(obstacle_id),
                         "type": node.getTypeName(),
+                        "x": belt_translation[0],
+                        "y": belt_translation[1],
                         "bbox": calculate_bbox(belt_translation, belt_size)
                     })
                     obstacle_id += 1
@@ -393,8 +397,228 @@ def rotate_near_manhole_objects(supervisor, robot_def, threshold=0.25, angle_ran
             print(f"[ERROR] Lỗi xử lý node {i}: {e}")
             continue
 
+
+def create_postgres_connection():
+    """
+    Creates a connection to the PostgreSQL database.
+    Returns the connection object or None if the connection fails.
+    """
+    try:
+        connection = psycopg2.connect(
+            dbname="arm",
+            user="postgres",
+            password="postgres",  # Replace with the actual password or use environment variables
+            host="localhost",
+            port=5432
+        )
+        print("Connection to PostgreSQL database established successfully.")
+        return connection
+    except Exception as e:
+        print(f"Error connecting to PostgreSQL database: {e}")
+        return None
+
+def fetch_all_maps():
+    """
+    Fetch all rows from the "maps" table in the PostgreSQL database.
+    Returns a list of dictionaries representing the rows, or an empty list if an error occurs.
+    """
+    try:
+        connection = create_postgres_connection()
+        if connection is None:
+            print("Failed to establish database connection.")
+            return []
+
+        cursor = connection.cursor()
+        query = "SELECT id, created_at, created_by, updated_at, updated_by, name, width, height, description FROM public.maps"
+        cursor.execute(query)
+
+        # Fetch all rows and convert to a list of dictionaries
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        connection.close()
+
+        return result
+
+    except Exception as e:
+        print(f"Error fetching maps: {e}")
+        return []
+
+def delete_all_map_objects(connection):
+    """
+    Deletes all records from the "maps" table in the PostgreSQL database.
+
+    Args:
+        cursor: The database cursor to execute the query.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.map_objects;"
+        cursor.execute(delete_query)
+        connection.commit()
+        print("All map object s deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting map objects: {e}")
+        return False
+
+def delete_all_maps(connection):
+    """
+    Deletes all records from the "maps" table in the PostgreSQL database.
+
+    Args:
+        cursor: The database cursor to execute the query.
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.maps;"
+        cursor.execute(delete_query)
+        connection.commit()  # Commit the transaction
+        print("All maps deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting maps: {e}")
+        return False
+
+def delete_all_object_types(connection):
+    """
+    Deletes all records from the "maps" table in the PostgreSQL database.
+
+    Args:
+        cursor: The database cursor to execute the query.
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.object_types;"
+        cursor.execute(delete_query)
+        connection.commit()  # Commit the transaction
+        print("All object types deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting object types: {e}")
+        return False
+
+def insert_map(connection, created_by, name, width, height, description=None):
+    """
+    Inserts a new map record into the "maps" table in the PostgreSQL database.
+
+    Args:
+        cursor: The database cursor to execute the query.
+        connection: The database connection to commit the transaction.
+        created_by (str): The user who created the map.
+        name (str): The name of the map.
+        width (int): The width of the map.
+        height (int): The height of the map.
+        description (str, optional): A description of the map. Defaults to None.
+
+    Returns:
+        bool: True if the insertion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO public.maps (created_at, created_by, updated_at, updated_by, name, width, height, description)
+        VALUES (NOW(), %s, NOW(), %s, %s, %s, %s, %s)  RETURNING id;
+        """
+        cursor.execute(insert_query, (created_by, created_by, name, width, height, description))
+        map_id = cursor.fetchone()[0]
+        connection.commit()  # Commit the transaction
+        print("Map inserted successfully.")
+        return map_id
+
+    except Exception as e:
+        print(f"Error inserting map: {e}")
+        return None
+
+def insert_object_type(connection, created_by, name, settings=None):
+    """
+    Inserts a new object type into the "object_types" table in the PostgreSQL database.
+
+    Args:
+        cursor: The database cursor to execute the query.
+        connection: The database connection to commit the transaction.
+        created_by (str): The user who created the object type.
+        name (str): The name of the object type.
+        settings (dict, optional): Additional settings for the object type. Defaults to None.
+
+    Returns:
+        int: The ID of the inserted object type, or None if the insertion failed.
+    """
+    try:
+        cursor = connection.cursor()
+        if not settings:
+            settings = json.dumps({"objectType": "obstacle"})
+        insert_query = """
+        INSERT INTO public.object_types (created_at, created_by, updated_at, updated_by, name, settings)
+        VALUES (NOW(), %s, NOW(), %s, %s, %s) RETURNING id;
+        """
+        cursor.execute(insert_query, (created_by, created_by, name, json.dumps(settings) if settings else None))
+        object_type_id = cursor.fetchone()[0]
+        connection.commit()  # Commit the transaction
+        print(f"Object type '{name}' inserted successfully with ID {object_type_id}.")
+        return object_type_id
+    except Exception as e:
+        print(f"Error inserting object type: {e}")
+        return None
+
+def insert_map_objects_from_cache(connection, created_by, map_id, object_type_id, cached_map):
+    """
+    Inserts objects from the cached map into the "map_objects" table in the PostgreSQL database.
+
+    Args:
+        cursor: The database cursor to execute the query.
+        connection: The database connection to commit the transaction.
+        created_by (str): The user who created the map objects.
+        map_id (int): The ID of the map these objects belong to.
+        object_type_id (int): The ID of the object type for these objects.
+
+    Returns:
+        int: The number of objects inserted, or None if the insertion failed.
+    """
+    try:
+        # Fetch the cached map
+        cursor = connection.cursor()
+        objects = cached_map['objects']
+        insert_query = """
+        INSERT INTO public.map_objects (created_at, created_by, updated_at, updated_by, name, shape, x, y, map_id, object_type_id)
+        VALUES (NOW(), %s, NOW(), %s, %s, %s, %s, %s, %s, %s);
+        """
+
+        for obj in objects:
+            name = obj.get('type', 'Unknown Object')
+            shape = json.dumps(obj.get('bbox', {}))
+            x = obj.get('x', 0)
+            y = obj.get('y', 0)
+
+            cursor.execute(insert_query, (created_by, created_by, name, shape, x, y, map_id, object_type_id))
+
+        connection.commit()  # Commit the transaction
+        print(f"Inserted {len(objects)} objects into the map_objects table.")
+        return len(objects)
+
+    except Exception as e:
+        print(f"Error inserting map objects: {e}")
+        return None
+
+
 # --- Main Logic ---
 if __name__ == "__main__":
+    import sys
+
+    print("Webots Python:", sys.executable)
     # Khởi tạo cache ban đầu
     print("Initializing map cache...")
     initial_map = get_cached_map()
@@ -402,6 +626,53 @@ if __name__ == "__main__":
         print(f"Map initialized with {len(initial_map['objects'])} obstacles")
     else:
         print("Warning: Failed to initialize map")
+
+    # Kết nối tới cơ sở dữ liệu PostgreSQL
+    connection = create_postgres_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            delete_all_map_objects(connection)
+            delete_all_object_types(connection)
+            delete_all_maps(connection)  # Xóa tất cả bản ghi hiện có
+            maps = fetch_all_maps()
+            map_count = len(maps)
+
+            if map_count == 0 :
+                # Nếu chưa có bản ghi nào, chèn một bản ghi mới
+                factory_map = get_cached_map()
+                # print(factory_map)
+                if factory_map:
+                    map_id = insert_map(
+                        connection,
+                        created_by="system",
+                        name=factory_map.get("name", "Default Map"),
+                        width=factory_map.get("width", 100),
+                        height=factory_map.get("height", 100),
+                        description="This is the default map."
+                    )
+                    if map_id:
+                        print("Inserted a default map into the database.")
+                    else:
+                        print("Failed to insert the default map.")
+                    obstacle_type_id = insert_object_type(connection, created_by="system", name="obstacle")
+                    if obstacle_type_id:
+                        print("Inserted a obstacle type into the database.")
+                    else:
+                        print("Failed to insert the obstacle type.")
+                    insert_map_objects_from_cache(
+                        connection, created_by="system", map_id=map_id, object_type_id=obstacle_type_id, cached_map=factory_map)
+                else:
+                    print("Failed to retrieve the factory map.")
+            else:
+                print(f"Database already contains {map_count} map(s). No insertion needed.")
+
+            cursor.close()
+        except Exception as e:
+            print(f"Error during database initialization: {e}")
+        finally:
+            connection.close()
 
     # Chạy Flask server trong thread riêng
     flask_thread = threading.Thread(target=run_flask, daemon=True)
@@ -417,12 +688,8 @@ if __name__ == "__main__":
 
     # track time for periodic actions
     last_publish_time = time.time()
-    publisher_thread = threading.Thread(
-        target=publish_robot_and_obstacles,
-        args=(root_supervisor,),
-        daemon=True,
-    )
-    publisher_thread.start()
+
+    publisher_thread = None
     while root_supervisor.step(timestep) != -1:
         # compute current time at start of iteration
         now = time.time()
@@ -433,8 +700,13 @@ if __name__ == "__main__":
             threshold=0.5,
             angle_range=(5, 10)
         )
-
+        if not publisher_thread or not publisher_thread.is_alive():
+            publisher_thread = threading.Thread(
+                target=publish_robot_and_obstacles,
+                args=(root_supervisor,),
+                daemon=True,
+            )
+            publisher_thread.start()
         loop_count += 1
-
 
     print("Webots simulation ended")

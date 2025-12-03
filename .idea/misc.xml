@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="/opt/anaconda3" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 virtualenv at /Applications/Webots.app/Contents/lib/controller/python/.venv" project-jdk-type="Python SDK" />
 </project>
