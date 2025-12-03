@@ -1,4 +1,6 @@
 import json
+from time import sleep
+
 from controller import Supervisor
 import redis
 import threading
@@ -60,15 +62,6 @@ def calculate_bbox(translation, size):
         [bx + bl / 2, by + bw / 2],  # top-right
     ]
 
-# robot_0_topic = redis_client.pubsub()
-# robot_0_topic.subscribe("robot_0")
-#
-#
-# robot_1_topic = redis_client.pubsub()
-# robot_1_topic.subscribe("robot_1")
-#
-# robot_2_topic = redis_client.pubsub()
-# robot_2_topic.subscribe("robot_2")
 
 def parse_robot_message(message):
     import json
@@ -123,31 +116,8 @@ def publish_robot_and_obstacles(supervisor = root_supervisor):
             return None
 
         robot_0 = fetch_current_robot_api(0)
-        # while True:
-        #     msg = robot_0_topic.get_message(ignore_subscribe_messages=True)
-        #     if msg is None:
-        #         break
-        #     if msg["type"] == "message":
-        #         robot_0 = parse_robot_message(msg["data"])
-
         robot_1 = fetch_current_robot_api(1)
-        # while True:
-        #     msg = robot_1_topic.get_message(ignore_subscribe_messages=True)
-        #     if msg is None:
-        #         break
-        #     if msg["type"] == "message":
-        #         robot_1 = parse_robot_message(msg["data"])
-
-
         robot_2 = fetch_current_robot_api(2)
-        # while True:
-        #     msg = robot_2_topic.get_message(ignore_subscribe_messages=True)
-        #     if msg is None:
-        #         break
-        #     if msg["type"] == "message":
-        #         robot_2 = parse_robot_message(msg["data"])
-
-
         robot_3  = fetch_current_robot_api(3)
 
         arena_size = arena.getField("floorSize").getSFVec2f()
@@ -185,11 +155,9 @@ def publish_robot_and_obstacles(supervisor = root_supervisor):
                 print(f"Error processing node {i}: {e}")
                 continue
         message = {"april_tags": [robot_0, robot_1, robot_2, robot_3], "objects": obstacles}
-        # print(f"message: {message}")
         redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
         last_redis_publish = now
-        # s, e = REDIS_PUBLISH_INTERVAL
-        # random_delay = random.uniform(s, e)
+        sleep(0.05)
     except Exception as e:
         print(f"Error publishing apriltags and robots: {e}")
         return None
