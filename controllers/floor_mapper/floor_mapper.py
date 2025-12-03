@@ -451,7 +451,7 @@ def delete_all_map_objects(connection):
     Deletes all records from the "maps" table in the PostgreSQL database.
 
     Args:
-        cursor: The database cursor to execute the query.
+        connection: The database cursor to execute the query.
 
     Returns:
         bool: True if the deletion was successful, False otherwise.
@@ -472,7 +472,6 @@ def delete_all_maps(connection):
     Deletes all records from the "maps" table in the PostgreSQL database.
 
     Args:
-        cursor: The database cursor to execute the query.
         connection: The database connection to commit the transaction.
 
     Returns:
@@ -494,7 +493,6 @@ def delete_all_object_types(connection):
     Deletes all records from the "maps" table in the PostgreSQL database.
 
     Args:
-        cursor: The database cursor to execute the query.
         connection: The database connection to commit the transaction.
 
     Returns:
@@ -516,7 +514,6 @@ def insert_map(connection, created_by, name, width, height, description=None):
     Inserts a new map record into the "maps" table in the PostgreSQL database.
 
     Args:
-        cursor: The database cursor to execute the query.
         connection: The database connection to commit the transaction.
         created_by (str): The user who created the map.
         name (str): The name of the map.
@@ -548,7 +545,6 @@ def insert_object_type(connection, created_by, name, settings=None):
     Inserts a new object type into the "object_types" table in the PostgreSQL database.
 
     Args:
-        cursor: The database cursor to execute the query.
         connection: The database connection to commit the transaction.
         created_by (str): The user who created the object type.
         name (str): The name of the object type.
@@ -614,6 +610,183 @@ def insert_map_objects_from_cache(connection, created_by, map_id, object_type_id
         return None
 
 
+def insert_robot_type(connection, created_by, name, capacity=None, max_speed=None,
+                     safe_distance=None, min_battery_capacity=None, robot_type_id=None,
+                     model=None, description=None, width=None, height=None, length=None):
+    """
+    Inserts a new robot type into the "robot_types" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        created_by (str): The user who created the robot type.
+        name (str): The name of the robot type.
+        capacity (int, optional): Robot capacity.
+        max_speed (numeric, optional): Maximum speed of the robot.
+        safe_distance (int, optional): Safe distance for the robot.
+        min_battery_capacity (int, optional): Minimum battery capacity.
+        robot_type_id (str, optional): Robot type identifier.
+        model (str, optional): Robot model.
+        description (str, optional): Description of the robot type.
+        width (int, optional): Robot width.
+        height (int, optional): Robot height.
+        length (int, optional): Robot length.
+
+    Returns:
+        int: The ID of the inserted robot type, or None if the insertion failed.
+    """
+    try:
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO public.robot_types (
+            created_at, created_by, updated_at, updated_by, name, capacity, 
+            max_speed, safe_distance, min_battery_capacity, robot_type_id, 
+            model, description, width, height, length
+        )
+        VALUES (NOW(), %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id;
+        """
+
+        cursor.execute(insert_query, (
+            created_by, created_by, name, capacity, max_speed, safe_distance,
+            min_battery_capacity, robot_type_id, model, description,
+            width, height, length
+        ))
+
+        robot_type_id_result = cursor.fetchone()[0]
+        connection.commit()
+        print(f"Robot type '{name}' inserted successfully with ID {robot_type_id_result}.")
+        return robot_type_id_result
+
+    except Exception as e:
+        print(f"Error inserting robot type: {e}")
+        return None
+
+def delete_all_robot_types(connection):
+    """
+    Deletes all records from the "robot_types" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.robot_types;"
+        cursor.execute(delete_query)
+        connection.commit()
+        print("All robot types deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting robot types: {e}")
+        return False
+
+def insert_robot(connection, created_by, serial_number, ua_opc_endpoint, name=None,
+                capacity=None, max_speed=None, robot_type_id=None, firmware_version=None,
+                username=None, password=None, min_battery_capacity=None, safe_distance=None,
+                last_maintenance=None, installation_date=None, status="active"):
+    """
+    Inserts a new robot into the "robots" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        created_by (str): The user who created the robot.
+        serial_number (str): Unique serial number for the robot.
+        ua_opc_endpoint (str): OPC UA endpoint for the robot.
+        name (str, optional): The name of the robot.
+        capacity (int, optional): Robot capacity.
+        max_speed (numeric, optional): Maximum speed of the robot.
+        robot_type_id (int, optional): Foreign key to robot_types table.
+        firmware_version (str, optional): Firmware version of the robot.
+        username (str, optional): Username for robot authentication.
+        password (str, optional): Password for robot authentication.
+        min_battery_capacity (int, optional): Minimum battery capacity.
+        safe_distance (int, optional): Safe distance for the robot.
+        last_maintenance (datetime, optional): Last maintenance timestamp.
+        installation_date (datetime, optional): Installation date.
+        status (str, optional): Robot status (default: "active").
+
+    Returns:
+        int: The ID of the inserted robot, or None if the insertion failed.
+    """
+    try:
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO public.robots (
+            created_at, created_by, updated_at, updated_by, capacity, max_speed, 
+            name, robot_type_id, serial_number, ua_opc_endpoint, firmware_version,
+            username, password, min_battery_capacity, safe_distance, 
+            last_maintenance, installation_date, status
+        )
+        VALUES (NOW(), %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id;
+        """
+
+        cursor.execute(insert_query, (
+            created_by, created_by, capacity, max_speed, name, robot_type_id,
+            serial_number, ua_opc_endpoint, firmware_version, username, password,
+            min_battery_capacity, safe_distance, last_maintenance, installation_date, status
+        ))
+
+        robot_id = cursor.fetchone()[0]
+        connection.commit()
+        print(f"Robot '{name or serial_number}' inserted successfully with ID {robot_id}.")
+        return robot_id
+
+    except Exception as e:
+        print(f"Error inserting robot: {e}")
+        return None
+
+def delete_all_robots(connection):
+    """
+    Deletes all records from the "robots" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.robots;"
+        cursor.execute(delete_query)
+        connection.commit()
+        print("All robots deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting robots: {e}")
+        return False
+
+def fetch_all_robots(connection):
+    """
+    Fetch all rows from the "robots" table in the PostgreSQL database.
+    Returns a list of dictionaries representing the rows, or an empty list if an error occurs.
+    """
+    try:
+        cursor = connection.cursor()
+        query = """
+        SELECT id, created_at, created_by, updated_at, updated_by, capacity, max_speed, 
+               name, robot_type_id, serial_number, ua_opc_endpoint, firmware_version,
+               username, min_battery_capacity, safe_distance, last_maintenance, 
+               installation_date, status
+        FROM public.robots WHERE deleted_at IS NULL
+        """
+        cursor.execute(query)
+
+        # Fetch all rows and convert to a list of dictionaries
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        return result
+
+    except Exception as e:
+        print(f"Error fetching robots: {e}")
+        return []
+
 # --- Main Logic ---
 if __name__ == "__main__":
     import sys
@@ -668,7 +841,83 @@ if __name__ == "__main__":
             else:
                 print(f"Database already contains {map_count} map(s). No insertion needed.")
 
-            cursor.close()
+            # Delete all existing robot types first
+
+            delete_all_robots(connection)
+            delete_all_robot_types(connection)
+
+            # Initialize robot type based on .env configuration
+            delete_all_robot_types(connection)
+            robot_type_id = insert_robot_type(
+                connection=connection,
+                created_by="system",
+                name="Pioneer 3-AT",
+                capacity=100,  # kg capacity
+                max_speed=2.5,  # m/s max speed
+                safe_distance=int(0.1 * 100),  # SAFETY_DISTANCE from .env (0.1m = 10cm)
+                min_battery_capacity=20,  # percentage
+                robot_type_id="PIONEER_3AT",
+                model="Pioneer 3-AT Mobile Robot",
+                description="Autonomous mobile robot for warehouse operations with safety distance 0.1m and tolerance 0.1m",
+                width=int(0.6 * 100),   # ROBOT_WIDTH from .env (0.6m = 60cm)
+                height=40,  # cm
+                length=int(0.6 * 100)   # ROBOT_LENGTH from .env (0.6m = 60cm)
+            )
+
+            if robot_type_id:
+                print(f"Configuration: Width={0.6}m, Length={0.6}m, Safety Distance={0.1}m")
+
+                # Delete all existing robots first
+
+                # Initialize sample robots using the created robot type
+                robots_config = [
+                    {
+                        "name": "Pioneer-Robot-01",
+                        "serial_number": "PION-3AT-001",
+                        "ua_opc_endpoint": "opc.tcp://localhost:6001/robot1"
+                    },
+                    {
+                        "name": "Pioneer-Robot-02",
+                        "serial_number": "PION-3AT-002",
+                        "ua_opc_endpoint": "opc.tcp://localhost:6002/robot2"
+                    },
+                    {
+                        "name": "Pioneer-Robot-03",
+                        "serial_number": "PION-3AT-003",
+                        "ua_opc_endpoint": "opc.tcp://localhost:6003/robot3"
+                    },
+                    {
+                        "name": "Pioneer-Robot-04",
+                        "serial_number": "PION-3AT-004",
+                        "ua_opc_endpoint": "opc.tcp://localhost:6004/robot4"
+                    }
+                ]
+
+                for i, robot_config in enumerate(robots_config):
+                    robot_id = insert_robot(
+                        connection=connection,
+                        created_by="system",
+                        name=robot_config["name"],
+                        serial_number=robot_config["serial_number"],
+                        ua_opc_endpoint=robot_config["ua_opc_endpoint"],
+                        robot_type_id=robot_type_id,
+                        capacity=100,  # kg capacity
+                        max_speed=2.5,  # m/s max speed
+                        safe_distance=int(0.1 * 100),  # SAFETY_DISTANCE from .env (10cm)
+                        min_battery_capacity=20,  # percentage
+                        firmware_version="1.0.0",
+                        username="robot_user",
+                        password="robot_pass",
+                        status="active"
+                    )
+
+                    if not robot_id:
+                        print(f"Failed to insert robot '{robot_config['name']}'.")
+
+                print(f"Successfully initialized {len(robots_config)} robots in the database.")
+            else:
+                print("Failed to insert robot type.")
+
         except Exception as e:
             print(f"Error during database initialization: {e}")
         finally:
