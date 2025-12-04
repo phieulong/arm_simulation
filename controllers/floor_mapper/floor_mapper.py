@@ -101,7 +101,7 @@ def fetch_current_robot_api(robot_id=0, timeout=2):
 
     return {}
 
-def publish_robot_and_obstacles(supervisor = root_supervisor):
+def publish_robot_and_obstacles(map_robot_ids, supervisor = root_supervisor):
     global last_redis_publish, random_delay
 
     now = time.time()
@@ -118,9 +118,13 @@ def publish_robot_and_obstacles(supervisor = root_supervisor):
             return None
 
         robot_0 = fetch_current_robot_api(0)
+        robot_0['object_id'] = map_robot_ids["0"]
         robot_1 = fetch_current_robot_api(1)
+        robot_1['object_id'] = map_robot_ids["1"]
         robot_2 = fetch_current_robot_api(2)
+        robot_2['object_id'] = map_robot_ids["2"]
         robot_3  = fetch_current_robot_api(3)
+        robot_3['object_id'] = map_robot_ids["3"]
 
         arena_size = arena.getField("floorSize").getSFVec2f()
         w, h = arena_size[0], arena_size[1]
@@ -445,6 +449,28 @@ def fetch_all_maps():
     except Exception as e:
         print(f"Error fetching maps: {e}")
         return []
+
+def delete_all_allowed_zone(connection):
+    """
+    Deletes all records from the "maps" table in the PostgreSQL database.
+
+    Args:
+        connection: The database cursor to execute the query.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.robot_allowed_zones;"
+        cursor.execute(delete_query)
+        connection.commit()
+        print("All robot allowed zone s deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting robot allowed zone: {e}")
+        return False
+
 
 def delete_all_map_objects(connection):
     """
@@ -802,10 +828,13 @@ if __name__ == "__main__":
 
     # Kết nối tới cơ sở dữ liệu PostgreSQL
     connection = create_postgres_connection()
+    robot_map_ids = {}
+
     if connection:
         try:
             cursor = connection.cursor()
 
+            delete_all_allowed_zone(connection)
             delete_all_map_objects(connection)
             delete_all_object_types(connection)
             delete_all_maps(connection)  # Xóa tất cả bản ghi hiện có
@@ -872,27 +901,30 @@ if __name__ == "__main__":
                 # Initialize sample robots using the created robot type
                 robots_config = [
                     {
+                        "id": 0,
                         "name": "Pioneer-Robot-01",
                         "serial_number": "PION-3AT-001",
-                        "ua_opc_endpoint": "opc.tcp://localhost:6001/robot1"
+                        "ua_opc_endpoint": "opc.tcp://0.0.0.0:4840/freeopcua/server/"
                     },
                     {
+                        "id": 1,
                         "name": "Pioneer-Robot-02",
                         "serial_number": "PION-3AT-002",
-                        "ua_opc_endpoint": "opc.tcp://localhost:6002/robot2"
+                        "ua_opc_endpoint": "opc.tcp://0.0.0.0:4841/freeopcua/server/"
                     },
                     {
+                        "id": 2,
                         "name": "Pioneer-Robot-03",
                         "serial_number": "PION-3AT-003",
-                        "ua_opc_endpoint": "opc.tcp://localhost:6003/robot3"
+                        "ua_opc_endpoint": "opc.tcp://0.0.0.0:4842/freeopcua/server/"
                     },
                     {
+                        "id": 3,
                         "name": "Pioneer-Robot-04",
                         "serial_number": "PION-3AT-004",
-                        "ua_opc_endpoint": "opc.tcp://localhost:6004/robot4"
+                        "ua_opc_endpoint": "opc.tcp://0.0.0.0:4843/freeopcua/server/"
                     }
                 ]
-
                 for i, robot_config in enumerate(robots_config):
                     robot_id = insert_robot(
                         connection=connection,
@@ -906,11 +938,11 @@ if __name__ == "__main__":
                         safe_distance=int(0.1 * 100),  # SAFETY_DISTANCE from .env (10cm)
                         min_battery_capacity=20,  # percentage
                         firmware_version="1.0.0",
-                        username="robot_user",
-                        password="robot_pass",
+                        username="",
+                        password="",
                         status="active"
                     )
-
+                    robot_map_ids[f"{robot_config['id']}"] = robot_id
                     if not robot_id:
                         print(f"Failed to insert robot '{robot_config['name']}'.")
 
@@ -952,7 +984,7 @@ if __name__ == "__main__":
         if not publisher_thread or not publisher_thread.is_alive():
             publisher_thread = threading.Thread(
                 target=publish_robot_and_obstacles,
-                args=(root_supervisor,),
+                args=(robot_map_ids, root_supervisor),
                 daemon=True,
             )
             publisher_thread.start()
