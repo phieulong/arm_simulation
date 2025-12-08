@@ -1,4 +1,5 @@
 import json
+import socket
 from time import sleep
 
 from controller import Supervisor
@@ -9,6 +10,7 @@ from flask import Flask
 import random
 import psycopg2
 from psycopg2 import sql
+from redis import Connection
 
 # --- Cấu hình bản đồ ---
 API_URL = "http://localhost:6060/map"
@@ -26,8 +28,20 @@ cache_timestamp = 0
 CACHE_DURATION = 100000  # Cache trong 1 giây
 cache_lock = threading.Lock()
 
+class IPv4Connection(Connection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.socket_family = socket.AF_INET
+
 # Redis client
-redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0)
+pool = redis.ConnectionPool(
+    connection_class=IPv4Connection,
+    host='192.168.0.71',
+    port=26379,
+    db=0
+)
+
+redis_client = redis.Redis(host='192.168.0.71', port=26379, db=0, connection_pool=pool)
 
 # Flask app
 app = Flask(__name__)
