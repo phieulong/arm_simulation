@@ -72,10 +72,10 @@ def calculate_bbox(translation, size):
     bl, bw = size[0], size[1]
 
     return [
-        [bx - bl / 2, by - bw / 2],  # bottom-left
         [bx - bl / 2, by + bw / 2],  # top-left
-        [bx + bl / 2, by - bw / 2],  # bottom-right
         [bx + bl / 2, by + bw / 2],  # top-right
+        [bx + bl / 2, by - bw / 2],  # bottom-right
+        [bx - bl / 2, by - bw / 2],  # bottom-left
     ]
 
 
@@ -426,8 +426,8 @@ def create_postgres_connection():
             dbname="arm",
             user="postgres",
             password="postgres",  # Replace with the actual password or use environment variables
-            host="localhost",
-            port=5432
+            host="192.168.0.71",
+            port=25432
         )
         print("Connection to PostgreSQL database established successfully.")
         return connection
@@ -581,6 +581,7 @@ def insert_map(connection, created_by, name, width, height, description=None):
         return None
 
 def insert_object_type(connection, created_by, name, settings=None):
+    from psycopg2.extras import Json
     """
     Inserts a new object type into the "object_types" table in the PostgreSQL database.
 
@@ -596,12 +597,30 @@ def insert_object_type(connection, created_by, name, settings=None):
     try:
         cursor = connection.cursor()
         if not settings:
-            settings = json.dumps({"objectType": "obstacle"})
+            settings = Json({
+                    "icon": "",
+                    "color": "#0d738c",
+                    "shape": "polygon",
+                    "zIndex": 1,
+                    "movable": False,
+                    "iconType": "library",
+                    "isActive": True,
+                    "robotIds": [],
+                    "objectName": "Obstacle",
+                    "objectType": "obstacle",
+                    "safeRadius": 1,
+                    "description": "",
+                    "safetyLevel": None,
+                    "robotTypeIds": [],
+                    "stopActionThreshold": 1,
+                    "slowDownActionThreshold": 1
+                })
+
         insert_query = """
         INSERT INTO public.object_types (created_at, created_by, updated_at, updated_by, name, settings)
         VALUES (NOW(), %s, NOW(), %s, %s, %s) RETURNING id;
         """
-        cursor.execute(insert_query, (created_by, created_by, name, json.dumps(settings) if settings else None))
+        cursor.execute(insert_query, (created_by, created_by, name, settings if settings else None))
         object_type_id = cursor.fetchone()[0]
         connection.commit()  # Commit the transaction
         print(f"Object type '{name}' inserted successfully with ID {object_type_id}.")
@@ -827,6 +846,735 @@ def fetch_all_robots(connection):
         print(f"Error fetching robots: {e}")
         return []
 
+def insert_camera(connection, created_by, camera_id, name, calibration_preview_image=None,
+                 calibration_setting=None, calibration_status=None, connection_status=None,
+                 fov=None, frame_rate=None, ip=None, is_active=None, live_source=None,
+                 password=None, physical_location=None, port=None, position_mapping=None,
+                 protocol=None, snapshot=None, stitching_id=None, user_name=None,
+                 webrtc_live_url=None):
+    """
+    Inserts a new camera into the "cameras" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        created_by (str): The user who created the camera record.
+        camera_id (str): Unique camera identifier (required).
+        name (str): The name of the camera (required).
+        calibration_preview_image (str, optional): Preview image path for calibration.
+        calibration_setting (dict, optional): Calibration settings as JSON.
+        calibration_status (bool, optional): Calibration status.
+        connection_status (bool, optional): Connection status.
+        fov (float, optional): Field of view (double precision).
+        frame_rate (int, optional): Frame rate.
+        ip (str, optional): Camera IP address (max 16 chars).
+        is_active (bool, optional): Whether camera is active.
+        live_source (str, optional): Live source URL.
+        password (str, optional): Camera password.
+        physical_location (dict, optional): Physical location as JSON.
+        port (int, optional): Camera port number.
+        position_mapping (dict, optional): Position mapping as JSON.
+        protocol (str, optional): Connection protocol (max 20 chars).
+        snapshot (str, optional): Snapshot URL.
+        stitching_id (int, optional): Stitching ID reference.
+        user_name (str, optional): Camera username.
+        webrtc_live_url (str, optional): WebRTC live URL.
+
+    Returns:
+        int: The ID of the inserted camera, or None if the insertion failed.
+    """
+    try:
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO public.cameras (
+            created_at, created_by, updated_at, updated_by, calibration_preview_image,
+            calibration_setting, calibration_status, camera_id, connection_status, fov,
+            frame_rate, ip, is_active, live_source, name, password, physical_location,
+            port, position_mapping, protocol, snapshot, stitching_id, user_name,
+            webrtc_live_url
+        )
+        VALUES (NOW(), %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id;
+        """
+
+        cursor.execute(insert_query, (
+            created_by, created_by, calibration_preview_image,
+            json.dumps(calibration_setting) if calibration_setting else None,
+            calibration_status, camera_id, connection_status, fov, frame_rate, ip,
+            is_active, live_source, name, password,
+            json.dumps(physical_location) if physical_location else None,
+            port, json.dumps(position_mapping) if position_mapping else None,
+            protocol, snapshot, stitching_id, user_name, webrtc_live_url
+        ))
+
+        camera_db_id = cursor.fetchone()[0]
+        connection.commit()
+        print(f"Camera '{name}' (ID: {camera_id}) inserted successfully with database ID {camera_db_id}.")
+        return camera_db_id
+
+    except Exception as e:
+        print(f"Error inserting camera: {e}")
+        return None
+
+def delete_all_cameras(connection):
+    """
+    Deletes all records from the "cameras" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.cameras;"
+        cursor.execute(delete_query)
+        connection.commit()
+        print("All cameras deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting cameras: {e}")
+        return False
+
+def fetch_all_cameras(connection):
+    """
+    Fetch all rows from the "cameras" table in the PostgreSQL database.
+    Returns a list of dictionaries representing the rows, or an empty list if an error occurs.
+    """
+    try:
+        cursor = connection.cursor()
+        query = """
+        SELECT id, created_at, created_by, updated_at, updated_by, calibration_preview_image,
+               calibration_setting, calibration_status, camera_id, connection_status, fov,
+               frame_rate, ip, is_active, live_source, name, password, physical_location,
+               port, position_mapping, protocol, snapshot, stitching_id, user_name,
+               webrtc_live_url
+        FROM public.cameras
+        """
+        cursor.execute(query)
+
+        # Fetch all rows and convert to a list of dictionaries
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        return result
+
+    except Exception as e:
+        print(f"Error fetching cameras: {e}")
+        return []
+
+def initialize_sample_cameras(connection):
+    """
+    Initialize sample cameras into the database after map insertion.
+    This function inserts predefined camera configurations for the factory setup.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        list: List of camera IDs that were successfully inserted
+    """
+    try:
+        # Delete all existing cameras first
+        delete_all_cameras(connection)
+
+        # Sample camera configurations based on provided data
+        camera_configs = [
+            {
+                "camera_id": "Camera01",
+                "name": "Camera01",
+                "ip": "14.224.216.11",
+                "port": 8559,
+                "protocol": "RTSP",
+                "user_name": "admin",
+                "password": "bnk@13032018",
+                "is_active": True,
+                "connection_status": True,
+                "physical_location": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "width": 3840,
+                    "height": 2160,
+                    "rotationAngle": 0.0
+                },
+                "position_mapping": []
+            },
+            {
+                "camera_id": "CameraID03",
+                "name": "CameraName03",
+                "ip": "14.224.216.11",
+                "port": 8558,
+                "protocol": "RTSP",
+                "user_name": "admin",
+                "password": "bnk@13032018",
+                "is_active": True,
+                "connection_status": True,
+                "physical_location": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "width": 3840,
+                    "height": 2160,
+                    "rotationAngle": 0.0
+                },
+                "position_mapping": []
+            },
+            {
+                "camera_id": "Camera02",
+                "name": "Camera02",
+                "ip": "14.224.216.11",
+                "port": 8558,
+                "protocol": "RTSP",
+                "user_name": "admin",
+                "password": "bnk@13032018",
+                "is_active": True,
+                "connection_status": True,
+                "physical_location": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "width": 3840,
+                    "height": 2160,
+                    "rotationAngle": 0.0
+                },
+                "position_mapping": [
+                    {
+                        "x": 2438.6789918300083,
+                        "y": 150.03061965682622,
+                        "id": 1,
+                        "type": 1,
+                        "realX": 1.0,
+                        "realY": 1.0
+                    },
+                    {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "id": 0,
+                        "type": 0,
+                        "realX": 1.0,
+                        "realY": 1.0
+                    }
+                ],
+                "snapshot": "096c0060d18411f0950f12c8dcd0ebc3.jpg"
+            }
+        ]
+
+        inserted_camera_ids = []
+
+        for config in camera_configs:
+            camera_id = insert_camera(
+                connection=connection,
+                created_by="admin",
+                camera_id=config["camera_id"],
+                name=config["name"],
+                ip=config["ip"],
+                port=config["port"],
+                protocol=config["protocol"],
+                user_name=config["user_name"],
+                password=config["password"],
+                is_active=config["is_active"],
+                connection_status=config["connection_status"],
+                physical_location=config["physical_location"],
+                position_mapping=config["position_mapping"],
+                snapshot=config.get("snapshot")
+            )
+
+            if camera_id:
+                inserted_camera_ids.append(camera_id)
+                print(f"Successfully inserted camera '{config['name']}' with database ID {camera_id}")
+            else:
+                print(f"Failed to insert camera '{config['name']}'")
+
+        print(f"Successfully initialized {len(inserted_camera_ids)} cameras in the database.")
+        return inserted_camera_ids
+
+    except Exception as e:
+        print(f"Error initializing sample cameras: {e}")
+        return []
+
+def insert_map_camera(connection, map_id, camera_id):
+    """
+    Inserts a new map-camera relationship into the "map_cameras" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        map_id (int): The ID of the map (foreign key to maps table).
+        camera_id (int): The ID of the camera (foreign key to cameras table).
+
+    Returns:
+        int: The ID of the inserted map_camera relationship, or None if the insertion failed.
+    """
+    try:
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO public.map_cameras (map_id, camera_id)
+        VALUES (%s, %s)
+        RETURNING id;
+        """
+
+        cursor.execute(insert_query, (map_id, camera_id))
+        map_camera_id = cursor.fetchone()[0]
+        connection.commit()
+        print(f"Map-Camera relationship inserted successfully with ID {map_camera_id} (Map: {map_id}, Camera: {camera_id}).")
+        return map_camera_id
+
+    except Exception as e:
+        print(f"Error inserting map-camera relationship: {e}")
+        return None
+
+def delete_all_map_cameras(connection):
+    """
+    Deletes all records from the "map_cameras" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.map_cameras;"
+        cursor.execute(delete_query)
+        connection.commit()
+        print("All map-camera relationships deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting map-camera relationships: {e}")
+        return False
+
+def fetch_all_map_cameras(connection):
+    """
+    Fetch all rows from the "map_cameras" table in the PostgreSQL database.
+    Returns a list of dictionaries representing the rows, or an empty list if an error occurs.
+    """
+    try:
+        cursor = connection.cursor()
+        query = """
+        SELECT id, map_id, camera_id
+        FROM public.map_cameras
+        """
+        cursor.execute(query)
+
+        # Fetch all rows and convert to a list of dictionaries
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        return result
+
+    except Exception as e:
+        print(f"Error fetching map-camera relationships: {e}")
+        return []
+
+def fetch_cameras_by_map_id(connection, map_id):
+    """
+    Fetch all cameras associated with a specific map.
+
+    Args:
+        connection: The database connection.
+        map_id (int): The ID of the map.
+
+    Returns:
+        list: List of camera records associated with the map.
+    """
+    try:
+        cursor = connection.cursor()
+        query = """
+        SELECT c.id, c.camera_id, c.name, c.ip, c.port, c.protocol, 
+               c.is_active, c.connection_status, c.physical_location, c.position_mapping
+        FROM public.cameras c
+        INNER JOIN public.map_cameras mc ON c.id = mc.camera_id
+        WHERE mc.map_id = %s
+        """
+        cursor.execute(query, (map_id,))
+
+        # Fetch all rows and convert to a list of dictionaries
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        return result
+
+    except Exception as e:
+        print(f"Error fetching cameras for map {map_id}: {e}")
+        return []
+
+def initialize_map_camera_relationships(connection, map_id, camera_ids):
+    """
+    Initialize relationships between a map and multiple cameras.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        map_id (int): The ID of the map.
+        camera_ids (list): List of camera IDs to associate with the map.
+
+    Returns:
+        list: List of map_camera IDs that were successfully inserted.
+    """
+    try:
+        # Delete existing relationships for this map
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.map_cameras WHERE map_id = %s;"
+        cursor.execute(delete_query, (map_id,))
+
+        inserted_ids = []
+
+        for camera_id in camera_ids:
+            map_camera_id = insert_map_camera(connection, map_id, camera_id)
+            if map_camera_id:
+                inserted_ids.append(map_camera_id)
+
+        print(f"Successfully initialized {len(inserted_ids)} map-camera relationships for map {map_id}.")
+        return inserted_ids
+
+    except Exception as e:
+        print(f"Error initializing map-camera relationships: {e}")
+        return []
+
+def insert_robot_state(connection, robot_id, x=None, y=None, status=None, battery_level=None):
+    """
+    Inserts a new robot state into the "robot_states" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        robot_id (int): The ID of the robot (foreign key to robots table, required).
+        x (float, optional): X coordinate position (numeric 10,2).
+        y (float, optional): Y coordinate position (numeric 10,2).
+        status (str, optional): Robot status (max 50 chars).
+        battery_level (int, optional): Battery level percentage.
+
+    Returns:
+        int: The ID of the inserted robot state, or None if the insertion failed.
+    """
+    try:
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO public.robot_states (x, y, status, battery_level, robot_id, updated_at)
+        VALUES (%s, %s, %s, %s, %s, NOW())
+        RETURNING id;
+        """
+
+        cursor.execute(insert_query, (x, y, status, battery_level, robot_id))
+        robot_state_id = cursor.fetchone()[0]
+        connection.commit()
+        print(f"Robot state inserted successfully with ID {robot_state_id} for robot {robot_id}.")
+        return robot_state_id
+
+    except Exception as e:
+        print(f"Error inserting robot state: {e}")
+        return None
+
+def delete_all_robot_states(connection):
+    """
+    Deletes all records from the "robot_states" table in the PostgreSQL database.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        bool: True if the deletion was successful, False otherwise.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = "DELETE FROM public.robot_states;"
+        cursor.execute(delete_query)
+        connection.commit()
+        print("All robot states deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"Error deleting robot states: {e}")
+        return False
+
+def fetch_all_robot_states(connection):
+    """
+    Fetch all rows from the "robot_states" table in the PostgreSQL database.
+    Returns a list of dictionaries representing the rows, or an empty list if an error occurs.
+    """
+    try:
+        cursor = connection.cursor()
+        query = """
+        SELECT id, x, y, status, battery_level, robot_id, updated_at
+        FROM public.robot_states
+        ORDER BY updated_at DESC
+        """
+        cursor.execute(query)
+
+        # Fetch all rows and convert to a list of dictionaries
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        return result
+
+    except Exception as e:
+        print(f"Error fetching robot states: {e}")
+        return []
+
+def fetch_robot_states_by_robot_id(connection, robot_id, limit=10):
+    """
+    Fetch robot states for a specific robot, ordered by most recent first.
+
+    Args:
+        connection: The database connection.
+        robot_id (int): The ID of the robot.
+        limit (int, optional): Maximum number of states to return. Defaults to 10.
+
+    Returns:
+        list: List of robot state records for the specified robot.
+    """
+    try:
+        cursor = connection.cursor()
+        query = """
+        SELECT id, x, y, status, battery_level, robot_id, updated_at
+        FROM public.robot_states
+        WHERE robot_id = %s
+        ORDER BY updated_at DESC
+        LIMIT %s
+        """
+        cursor.execute(query, (robot_id, limit))
+
+        # Fetch all rows and convert to a list of dictionaries
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        return result
+
+    except Exception as e:
+        print(f"Error fetching robot states for robot {robot_id}: {e}")
+        return []
+
+def get_latest_robot_state(connection, robot_id):
+    """
+    Get the most recent state for a specific robot.
+
+    Args:
+        connection: The database connection.
+        robot_id (int): The ID of the robot.
+
+    Returns:
+        dict: The latest robot state record, or None if not found.
+    """
+    try:
+        cursor = connection.cursor()
+        query = """
+        SELECT id, x, y, status, battery_level, robot_id, updated_at
+        FROM public.robot_states
+        WHERE robot_id = %s
+        ORDER BY updated_at DESC
+        LIMIT 1
+        """
+        cursor.execute(query, (robot_id,))
+        row = cursor.fetchone()
+
+        cursor.close()
+
+        if row:
+            columns = [desc[0] for desc in cursor.description]
+            return dict(zip(columns, row))
+        return None
+
+    except Exception as e:
+        print(f"Error fetching latest robot state for robot {robot_id}: {e}")
+        return None
+
+def bulk_insert_robot_states(connection, robot_states):
+    """
+    Insert multiple robot states in a single transaction for better performance.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        robot_states (list): List of robot state dictionaries with keys:
+                           ['robot_id', 'x', 'y', 'status', 'battery_level']
+
+    Returns:
+        int: Number of robot states successfully inserted, or None if failed.
+    """
+    try:
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO public.robot_states (x, y, status, battery_level, robot_id, updated_at)
+        VALUES (%s, %s, %s, %s, %s, NOW())
+        """
+
+        # Prepare data for bulk insert
+        data_to_insert = []
+        for state in robot_states:
+            data_to_insert.append((
+                state.get('x'),
+                state.get('y'),
+                state.get('status'),
+                state.get('battery_level'),
+                state.get('robot_id')
+            ))
+
+        # Execute bulk insert
+        cursor.executemany(insert_query, data_to_insert)
+        connection.commit()
+
+        inserted_count = len(data_to_insert)
+        print(f"Successfully bulk inserted {inserted_count} robot states.")
+        return inserted_count
+
+    except Exception as e:
+        print(f"Error bulk inserting robot states: {e}")
+        return None
+
+def update_robot_state(connection, robot_id, x=None, y=None, status=None, battery_level=None):
+    """
+    Update the latest robot state or insert a new one if none exists.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        robot_id (int): The ID of the robot.
+        x (float, optional): X coordinate position.
+        y (float, optional): Y coordinate position.
+        status (str, optional): Robot status.
+        battery_level (int, optional): Battery level percentage.
+
+    Returns:
+        int: The ID of the updated/inserted robot state, or None if failed.
+    """
+    try:
+        # Always insert a new state record (keeping history)
+        return insert_robot_state(connection, robot_id, x, y, status, battery_level)
+
+    except Exception as e:
+        print(f"Error updating robot state for robot {robot_id}: {e}")
+        return None
+
+def cleanup_old_robot_states(connection, days_to_keep=30):
+    """
+    Delete robot state records older than the specified number of days.
+
+    Args:
+        connection: The database connection to commit the transaction.
+        days_to_keep (int): Number of days of history to keep. Defaults to 30.
+
+    Returns:
+        int: Number of records deleted, or None if failed.
+    """
+    try:
+        cursor = connection.cursor()
+        delete_query = """
+        DELETE FROM public.robot_states 
+        """
+        cursor.execute(delete_query, (days_to_keep,))
+        deleted_count = cursor.rowcount
+        connection.commit()
+
+        print(f"Cleaned up {deleted_count} old robot state records (older than {days_to_keep} days).")
+        return deleted_count
+
+    except Exception as e:
+        print(f"Error cleaning up old robot states: {e}")
+        return None
+
+def initialize_default_robot_states(connection):
+    """
+    Initialize default robot states for all robots in the database.
+    Inserts initial states with x=null, y=null, status='IDLE', battery_level=100.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        list: List of robot state IDs that were successfully inserted.
+    """
+    try:
+        # Delete all existing robot states first
+        delete_all_robot_states(connection)
+
+        # Fetch all robots from database
+        robots = fetch_all_robots(connection)
+
+        if not robots:
+            print("No robots found in database to initialize states for.")
+            return []
+
+        inserted_state_ids = []
+
+        for robot in robots:
+            robot_id = robot['id']
+            robot_name = robot.get('name', f'Robot-{robot_id}')
+
+            # Insert default state for each robot
+            state_id = insert_robot_state(
+                connection=connection,
+                robot_id=robot_id,
+                x=None,  # null
+                y=None,  # null
+                status='IDLE',
+                battery_level=100
+            )
+
+            if state_id:
+                inserted_state_ids.append(state_id)
+                print(f"Initialized default state for robot '{robot_name}' (ID: {robot_id}) with state ID {state_id}")
+            else:
+                print(f"Failed to initialize state for robot '{robot_name}' (ID: {robot_id})")
+
+        print(f"Successfully initialized default states for {len(inserted_state_ids)} robots.")
+        return inserted_state_ids
+
+    except Exception as e:
+        print(f"Error initializing default robot states: {e}")
+        return []
+
+def bulk_initialize_robot_states_for_all(connection):
+    """
+    Bulk initialize default robot states for all robots for better performance.
+
+    Args:
+        connection: The database connection to commit the transaction.
+
+    Returns:
+        int: Number of robot states successfully inserted, or None if failed.
+    """
+    try:
+        # Delete all existing robot states first
+        delete_all_robot_states(connection)
+
+        # Fetch all robots from database
+        robots = fetch_all_robots(connection)
+
+        if not robots:
+            print("No robots found in database to initialize states for.")
+            return 0
+
+        # Prepare bulk data
+        robot_states = []
+        for robot in robots:
+            robot_states.append({
+                'robot_id': robot['id'],
+                'x': None,
+                'y': None,
+                'status': 'IDLE',
+                'battery_level': 100
+            })
+
+        # Bulk insert all robot states
+        inserted_count = bulk_insert_robot_states(connection, robot_states)
+        #
+        # if inserted_count:
+        #     print(f"Successfully bulk initialized default states for {inserted_count} robots.")
+        #     for robot in robots:
+        #         print(f"  - Robot '{robot.get('name', f'Robot-{robot['id']}')}' (ID: {robot['id']}) -> IDLE, 100%")
+
+        return inserted_count
+
+    except Exception as e:
+        print(f"Error bulk initializing robot states: {e}")
+        return None
+
 # --- Main Logic ---
 if __name__ == "__main__":
     import sys
@@ -847,7 +1595,7 @@ if __name__ == "__main__":
     if connection:
         try:
             cursor = connection.cursor()
-
+            delete_all_map_cameras(connection)
             delete_all_allowed_zone(connection)
             delete_all_map_objects(connection)
             delete_all_object_types(connection)
@@ -855,6 +1603,7 @@ if __name__ == "__main__":
             maps = fetch_all_maps()
             map_count = len(maps)
 
+            map_id = None  # Initialize map_id variable
             if map_count == 0 :
                 # Nếu chưa có bản ghi nào, chèn một bản ghi mới
                 factory_map = get_cached_map()
@@ -883,9 +1632,13 @@ if __name__ == "__main__":
                     print("Failed to retrieve the factory map.")
             else:
                 print(f"Database already contains {map_count} map(s). No insertion needed.")
+                # Get the first existing map ID for camera relationships
+                existing_maps = fetch_all_maps()
+                if existing_maps:
+                    map_id = existing_maps[0]['id']
 
             # Delete all existing robot types first
-
+            cleanup_old_robot_states(connection)
             delete_all_robots(connection)
             delete_all_robot_types(connection)
 
@@ -954,15 +1707,40 @@ if __name__ == "__main__":
                         firmware_version="1.0.0",
                         username="",
                         password="",
-                        status="active"
+                        status="CONNECTED"
                     )
                     robot_map_ids[f"{robot_config['id']}"] = robot_id
                     if not robot_id:
                         print(f"Failed to insert robot '{robot_config['name']}'.")
 
                 print(f"Successfully initialized {len(robots_config)} robots in the database.")
+
+                # Initialize default robot states after robots are created
+                print("Initializing default robot states...")
+                robot_state_count = bulk_initialize_robot_states_for_all(connection)
+                if robot_state_count and robot_state_count > 0:
+                    print(f"Successfully initialized default states for {robot_state_count} robots.")
+                else:
+                    print("Failed to initialize robot states.")
+
             else:
                 print("Failed to insert robot type.")
+
+            # Initialize sample cameras after robots are set up
+            print("Initializing sample cameras...")
+            camera_ids = initialize_sample_cameras(connection)
+            if camera_ids:
+                print(f"Successfully initialized {len(camera_ids)} cameras in the database.")
+
+                # Initialize map-camera relationships
+                print("Creating map-camera relationships...")
+                map_camera_ids = initialize_map_camera_relationships(connection, map_id, camera_ids)
+                if map_camera_ids:
+                    print(f"Successfully created {len(map_camera_ids)} map-camera relationships.")
+                else:
+                    print("Failed to create map-camera relationships.")
+            else:
+                print("Failed to initialize cameras.")
 
         except Exception as e:
             print(f"Error during database initialization: {e}")
