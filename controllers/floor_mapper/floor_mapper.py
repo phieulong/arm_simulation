@@ -9,7 +9,7 @@ import time
 from flask import Flask
 import random
 import psycopg2
-from psycopg2 import sql
+# from psycopg2 import sql  # Unused import commented out
 from redis import Connection
 
 # --- Cấu hình bản đồ ---
@@ -697,8 +697,8 @@ def insert_robot_type(connection, created_by, name, capacity=None, max_speed=Non
         cursor = connection.cursor()
         insert_query = """
         INSERT INTO public.robot_types (
-            created_at, created_by, updated_at, updated_by, name, capacity, 
-            max_speed, safe_distance, min_battery_capacity, robot_type_id, 
+            created_at, created_by, updated_at, updated_by, name, capacity,
+            max_speed, safe_distance, min_battery_capacity, robot_type_id,
             model, description, width, height, length
         )
         VALUES (NOW(), %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -773,9 +773,9 @@ def insert_robot(connection, created_by, serial_number, ua_opc_endpoint, name=No
         cursor = connection.cursor()
         insert_query = """
         INSERT INTO public.robots (
-            created_at, created_by, updated_at, updated_by, capacity, max_speed, 
+            created_at, created_by, updated_at, updated_by, capacity, max_speed,
             name, robot_type_id, serial_number, ua_opc_endpoint, firmware_version,
-            username, password, min_battery_capacity, safe_distance, 
+            username, password, min_battery_capacity, safe_distance,
             last_maintenance, installation_date, status
         )
         VALUES (NOW(), %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -826,9 +826,9 @@ def fetch_all_robots(connection):
     try:
         cursor = connection.cursor()
         query = """
-        SELECT id, created_at, created_by, updated_at, updated_by, capacity, max_speed, 
+        SELECT id, created_at, created_by, updated_at, updated_by, capacity, max_speed,
                name, robot_type_id, serial_number, ua_opc_endpoint, firmware_version,
-               username, min_battery_capacity, safe_distance, last_maintenance, 
+               username, min_battery_capacity, safe_distance, last_maintenance,
                installation_date, status
         FROM public.robots WHERE deleted_at IS NULL
         """
@@ -1185,7 +1185,7 @@ def fetch_cameras_by_map_id(connection, map_id):
     try:
         cursor = connection.cursor()
         query = """
-        SELECT c.id, c.camera_id, c.name, c.ip, c.port, c.protocol, 
+        SELECT c.id, c.camera_id, c.name, c.ip, c.port, c.protocol,
                c.is_active, c.connection_status, c.physical_location, c.position_mapping
         FROM public.cameras c
         INNER JOIN public.map_cameras mc ON c.id = mc.camera_id
@@ -1465,7 +1465,7 @@ def cleanup_old_robot_states(connection, days_to_keep=30):
     try:
         cursor = connection.cursor()
         delete_query = """
-        DELETE FROM public.robot_states 
+        DELETE FROM public.robot_states
         """
         cursor.execute(delete_query, (days_to_keep,))
         deleted_count = cursor.rowcount
@@ -1575,26 +1575,13 @@ def bulk_initialize_robot_states_for_all(connection):
         print(f"Error bulk initializing robot states: {e}")
         return None
 
-# --- Main Logic ---
-if __name__ == "__main__":
-    import sys
-
-    print("Webots Python:", sys.executable)
-    # Khởi tạo cache ban đầu
-    print("Initializing map cache...")
-    initial_map = get_cached_map()
-    if initial_map:
-        print(f"Map initialized with {len(initial_map['objects'])} obstacles")
-    else:
-        print("Warning: Failed to initialize map")
-
-    # Kết nối tới cơ sở dữ liệu PostgreSQL
+def init_data():
+# Kết nối tới cơ sở dữ liệu PostgreSQL
     connection = create_postgres_connection()
     robot_map_ids = {}
 
     if connection:
         try:
-            cursor = connection.cursor()
             delete_all_map_cameras(connection)
             delete_all_allowed_zone(connection)
             delete_all_map_objects(connection)
@@ -1747,6 +1734,53 @@ if __name__ == "__main__":
         finally:
             connection.close()
 
+def get_robot_ids_ascending():
+    """
+    Lấy danh sách ID của robot theo thứ tự tăng dần từ database.
+    Returns: List of robot IDs sorted in ascending order, or empty list if error occurs.
+    """
+    try:
+        connection = create_postgres_connection()
+        if connection is None:
+            print("Failed to establish database connection.")
+            return []
+
+        cursor = connection.cursor()
+        query = """
+        SELECT id 
+        FROM public.robots 
+        WHERE deleted_at IS NULL 
+        ORDER BY id ASC
+        """
+        cursor.execute(query)
+
+        # Fetch all robot IDs and convert to a simple list
+        robot_ids = [row[0] for row in cursor.fetchall()]
+
+        cursor.close()
+        connection.close()
+        return robot_ids
+
+    except Exception as e:
+        print(f"Error fetching robot IDs: {e}")
+        return []
+    finally:
+        if 'connection' in locals() and connection:
+            connection.close()
+
+# --- Main Logic ---
+if __name__ == "__main__":
+    import sys
+
+    print("Webots Python:", sys.executable)
+    # Khởi tạo cache ban đầu
+    print("Initializing map cache...")
+    initial_map = get_cached_map()
+    if initial_map:
+        print(f"Map initialized with {len(initial_map['objects'])} obstacles")
+    else:
+        print("Warning: Failed to initialize map")
+
     # Chạy Flask server trong thread riêng
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
@@ -1761,6 +1795,15 @@ if __name__ == "__main__":
 
     # track time for periodic actions
     last_publish_time = time.time()
+
+    robot_ids = get_robot_ids_ascending()
+
+    robot_map_ids = {
+        "0": robot_ids[0],
+        "1": robot_ids[1],
+        "2": robot_ids[2],
+        "3": robot_ids[3],
+    }
 
     publisher_thread = None
     while root_supervisor.step(timestep) != -1:
@@ -1783,3 +1826,4 @@ if __name__ == "__main__":
         loop_count += 1
 
     print("Webots simulation ended")
+
