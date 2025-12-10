@@ -1797,6 +1797,7 @@ if __name__ == "__main__":
     last_publish_time = time.time()
 
     robot_ids = get_robot_ids_ascending()
+    print(f"Robot IDs: {robot_ids}")
 
     robot_map_ids = {
         "0": robot_ids[0],
