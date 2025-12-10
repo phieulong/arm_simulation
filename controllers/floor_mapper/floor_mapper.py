@@ -1734,6 +1734,97 @@ def init_data():
         finally:
             connection.close()
 
+def execute_robot_task_queries():
+    """
+    Hàm đơn giản để chạy lần lượt 3 câu SQL:
+    1. INSERT vào bảng steps
+    2. INSERT vào bảng runtime_tasks
+    3. INSERT vào bảng runtime_tasks_steps
+
+    Returns:
+        bool: True nếu thành công, False nếu thất bại
+    """
+    connection = create_postgres_connection()
+    if not connection:
+        print("❌ Không thể kết nối đến database")
+        return False
+
+    try:
+        cursor = connection.cursor()
+
+        # Câu SQL thứ 1: INSERT vào bảng steps
+        sql_1 = """
+		        INSERT INTO public.steps (created_at, created_by, updated_at, updated_by, "action", description, name, from_map_object_id, to_map_object_id,
+		                                  speed_suggestion, to_map_object_x, to_map_object_y, to_map_object_theta, robot_type_id, accuracy_tolerance, deleted_at,
+		                                  deleted_by)
+		        VALUES ('2025-12-10 17:37:20.602567', 'robot_194_operator', '2025-12-10 17:37:20.602567', 'robot_194_operator', 'MOVE',
+		                'Di chuyển robot 194 đến điểm (4.09, 5.39)', 'Move_to_Target_Task_Robot_194_20251210_173720', NULL, 2151, 50, 409, 539, 0, 55, 10, NULL, NULL),
+		               ('2025-12-10 17:37:25.281722', 'robot_195_operator', '2025-12-10 17:37:25.281722', 'robot_195_operator', 'MOVE',
+		                'Di chuyển robot 195 đến điểm (2.47, 12.97)', 'Move_to_Target_Task_Robot_195_20251210_173725', NULL, 2152, 50, 247, 1297, 0, 55, 10, NULL, NULL),
+		               ('2025-12-10 17:37:29.399994', 'robot_196_operator', '2025-12-10 17:37:29.399994', 'robot_196_operator', 'MOVE',
+		                'Di chuyển robot 196 đến điểm (24.990000000000002, 6.23)', 'Move_to_Target_Task_Robot_196_20251210_173729', NULL, 2153, 50, 2499, 623, 0, 55, 10,
+		                NULL, NULL),
+		               ('2025-12-10 17:37:33.363689', 'robot_197_operator', '2025-12-10 17:37:33.363689', 'robot_197_operator', 'MOVE',
+		                'Di chuyển robot 197 đến điểm (23.89, 12.71)', 'Move_to_Target_Task_Robot_197_20251210_173733', NULL, 2154, 50, 2389, 1271, 0, 55, 10, NULL, NULL); \
+                """
+
+        print("🔄 Thực hiện câu SQL 1: INSERT vào bảng steps...")
+        cursor.execute(sql_1)
+        print("✅ Câu SQL 1 hoàn thành")
+
+        # Câu SQL thứ 2: INSERT vào bảng runtime_tasks
+        sql_2 = """
+		        INSERT INTO public.runtime_tasks (created_at, created_by, updated_at, updated_by, payload_info, payload_weight, priority, task_name, task_type, robot_id,
+		                                          task_template_id, current_runtime_task_step_id, planned_start_time, planned_end_time, actual_start_time,
+		                                          actual_end_time, status, user_id, description, action_reason, assigned_robots, safety_notes, execution_mode, is_repeat,
+		                                          repeat_interval, deleted_at, parent_id)
+		        VALUES ('2025-12-10 17:37:20.613368', 'robot_194_operator', '2025-12-10 17:37:20.613368', 'robot_194_operator', NULL, NULL, NULL,
+		                'Task_Robot_194_20251210_173720', NULL, 194, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+		                NULL),
+		               ('2025-12-10 17:37:25.29005', 'robot_195_operator', '2025-12-10 17:37:25.29005', 'robot_195_operator', NULL, NULL, NULL,
+		                'Task_Robot_195_20251210_173725', NULL, 195, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+		                NULL),
+		               ('2025-12-10 17:37:29.411668', 'robot_196_operator', '2025-12-10 17:37:29.411668', 'robot_196_operator', NULL, NULL, NULL,
+		                'Task_Robot_196_20251210_173729', NULL, 196, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+		                NULL),
+		               ('2025-12-10 17:37:33.374233', 'robot_197_operator', '2025-12-10 17:37:33.374233', 'robot_197_operator', NULL, NULL, NULL,
+		                'Task_Robot_197_20251210_173733', NULL, 197, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+		                NULL); \
+                """
+
+        print("🔄 Thực hiện câu SQL 2: INSERT vào bảng runtime_tasks...")
+        cursor.execute(sql_2)
+        print("✅ Câu SQL 2 hoàn thành")
+
+        # Câu SQL thứ 3: INSERT vào bảng runtime_tasks_steps
+        sql_3 = """
+		        INSERT INTO public.runtime_tasks_steps (step_id, step_number, runtime_task_id, status, started_at, completed_at, duration, note, result_code, operator_id,
+		                                                execution_mode)
+		        VALUES (119, 0, 119, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+		               (120, 0, 120, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+		               (121, 0, 121, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+		               (122, 0, 122, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL); \
+                """
+
+        print("🔄 Thực hiện câu SQL 3: INSERT vào bảng runtime_tasks_steps...")
+        cursor.execute(sql_3)
+        print("✅ Câu SQL 3 hoàn thành")
+
+        # Commit tất cả thay đổi
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        print("✅ Hoàn thành tất cả 3 câu SQL thành công!")
+        return True
+
+    except Exception as e:
+        print(f"❌ Lỗi khi thực hiện SQL: {e}")
+        if connection:
+            connection.rollback()
+            connection.close()
+        return False
+
 def get_robot_ids_ascending():
     """
     Lấy danh sách ID của robot theo thứ tự tăng dần từ database.
@@ -1756,6 +1847,25 @@ def get_robot_ids_ascending():
 
         # Fetch all robot IDs and convert to a simple list
         robot_ids = [row[0] for row in cursor.fetchall()]
+        # 1. Xóa runtime_tasks_steps trước (vì nó reference đến runtime_tasks và steps)
+        cursor.execute("DELETE FROM public.runtime_tasks_steps;")
+        deleted_steps = cursor.rowcount
+        connection.commit()
+        print(f"   ✅ Deleted {deleted_steps} records from runtime_tasks_steps")
+
+        # 2. Xóa runtime_tasks
+        cursor.execute("DELETE FROM public.runtime_tasks;")
+        deleted_tasks = cursor.rowcount
+        connection.commit()
+        print(f"   ✅ Deleted {deleted_tasks} records from runtime_tasks")
+
+        # 3. Xóa steps cuối cùng
+        cursor.execute("DELETE FROM public.steps;")
+        deleted_step_definitions = cursor.rowcount
+        connection.commit()
+        print(f"   ✅ Deleted {deleted_step_definitions} records from steps")
+
+        execute_robot_task_queries()
 
         cursor.close()
         connection.close()
