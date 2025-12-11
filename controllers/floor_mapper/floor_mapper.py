@@ -1825,6 +1825,49 @@ def execute_robot_task_queries():
             connection.close()
         return False
 
+def insert_tasks():
+    """
+    Lấy danh sách ID của robot theo thứ tự tăng dần từ database.
+    Returns: List of robot IDs sorted in ascending order, or empty list if error occurs.
+    """
+    try:
+        connection = create_postgres_connection()
+        if connection is None:
+            print("Failed to establish database connection.")
+            return []
+
+        cursor = connection.cursor()
+
+        # 1. Xóa runtime_tasks_steps trước (vì nó reference đến runtime_tasks và steps)
+        cursor.execute("DELETE FROM public.runtime_tasks_steps;")
+        deleted_steps = cursor.rowcount
+        connection.commit()
+        print(f"   ✅ Deleted {deleted_steps} records from runtime_tasks_steps")
+
+        # 2. Xóa runtime_tasks
+        cursor.execute("DELETE FROM public.runtime_tasks;")
+        deleted_tasks = cursor.rowcount
+        connection.commit()
+        print(f"   ✅ Deleted {deleted_tasks} records from runtime_tasks")
+
+        # 3. Xóa steps cuối cùng
+        cursor.execute("DELETE FROM public.steps;")
+        deleted_step_definitions = cursor.rowcount
+        connection.commit()
+        print(f"   ✅ Deleted {deleted_step_definitions} records from steps")
+
+        execute_robot_task_queries()
+
+        cursor.close()
+        connection.close()
+
+    except Exception as e:
+        print(f"Error fetching robot IDs: {e}")
+        return []
+    finally:
+        if 'connection' in locals() and connection:
+            connection.close()
+
 def get_robot_ids_ascending():
     """
     Lấy danh sách ID của robot theo thứ tự tăng dần từ database.
@@ -1847,25 +1890,6 @@ def get_robot_ids_ascending():
 
         # Fetch all robot IDs and convert to a simple list
         robot_ids = [row[0] for row in cursor.fetchall()]
-        # 1. Xóa runtime_tasks_steps trước (vì nó reference đến runtime_tasks và steps)
-        cursor.execute("DELETE FROM public.runtime_tasks_steps;")
-        deleted_steps = cursor.rowcount
-        connection.commit()
-        print(f"   ✅ Deleted {deleted_steps} records from runtime_tasks_steps")
-
-        # 2. Xóa runtime_tasks
-        cursor.execute("DELETE FROM public.runtime_tasks;")
-        deleted_tasks = cursor.rowcount
-        connection.commit()
-        print(f"   ✅ Deleted {deleted_tasks} records from runtime_tasks")
-
-        # 3. Xóa steps cuối cùng
-        cursor.execute("DELETE FROM public.steps;")
-        deleted_step_definitions = cursor.rowcount
-        connection.commit()
-        print(f"   ✅ Deleted {deleted_step_definitions} records from steps")
-
-        execute_robot_task_queries()
 
         cursor.close()
         connection.close()
@@ -1905,10 +1929,9 @@ if __name__ == "__main__":
 
     # track time for periodic actions
     last_publish_time = time.time()
-
+    insert_tasks()
     robot_ids = get_robot_ids_ascending()
     print(f"Robot IDs: {robot_ids}")
-
     robot_map_ids = {
         "0": robot_ids[0],
         "1": robot_ids[1],
