@@ -1742,73 +1742,89 @@ def execute_robot_task_queries():
     3. INSERT vào bảng runtime_tasks_steps
 
     Returns:
-        bool: True nếu thành công, False nếu thất bại
+        dict: {
+            'success': bool,
+            'step_ids': list,  # IDs từ câu SQL 1
+            'task_ids': list   # IDs từ câu SQL 2
+        }
     """
     connection = create_postgres_connection()
     if not connection:
         print("❌ Không thể kết nối đến database")
-        return False
+        return {'success': False, 'step_ids': [], 'task_ids': []}
 
     try:
         cursor = connection.cursor()
 
-        # Câu SQL thứ 1: INSERT vào bảng steps
+        # Câu SQL thứ 1: INSERT vào bảng steps với RETURNING id
         sql_1 = """
-		        INSERT INTO public.steps (created_at, created_by, updated_at, updated_by, "action", description, name, from_map_object_id, to_map_object_id,
-		                                  speed_suggestion, to_map_object_x, to_map_object_y, to_map_object_theta, robot_type_id, accuracy_tolerance, deleted_at,
-		                                  deleted_by)
-		        VALUES ('2025-12-10 17:37:20.602567', 'robot_194_operator', '2025-12-10 17:37:20.602567', 'robot_194_operator', 'MOVE',
-		                'Di chuyển robot 194 đến điểm (4.09, 5.39)', 'Move_to_Target_Task_Robot_194_20251210_173720', NULL, 2151, 50, 409, 539, 0, 55, 10, NULL, NULL),
-		               ('2025-12-10 17:37:25.281722', 'robot_195_operator', '2025-12-10 17:37:25.281722', 'robot_195_operator', 'MOVE',
-		                'Di chuyển robot 195 đến điểm (2.47, 12.97)', 'Move_to_Target_Task_Robot_195_20251210_173725', NULL, 2152, 50, 247, 1297, 0, 55, 10, NULL, NULL),
-		               ('2025-12-10 17:37:29.399994', 'robot_196_operator', '2025-12-10 17:37:29.399994', 'robot_196_operator', 'MOVE',
-		                'Di chuyển robot 196 đến điểm (24.990000000000002, 6.23)', 'Move_to_Target_Task_Robot_196_20251210_173729', NULL, 2153, 50, 2499, 623, 0, 55, 10,
-		                NULL, NULL),
-		               ('2025-12-10 17:37:33.363689', 'robot_197_operator', '2025-12-10 17:37:33.363689', 'robot_197_operator', 'MOVE',
-		                'Di chuyển robot 197 đến điểm (23.89, 12.71)', 'Move_to_Target_Task_Robot_197_20251210_173733', NULL, 2154, 50, 2389, 1271, 0, 55, 10, NULL, NULL); \
+	        INSERT INTO public.steps (created_at, created_by, updated_at, updated_by, "action", description, name, from_map_object_id, to_map_object_id,
+	                                  speed_suggestion, to_map_object_x, to_map_object_y, to_map_object_theta, robot_type_id, accuracy_tolerance, deleted_at,
+	                                  deleted_by)
+	        VALUES ('2025-12-10 17:37:20.602567', 'robot_194_operator', '2025-12-10 17:37:20.602567', 'robot_194_operator', 'MOVE',
+	                'Di chuyển robot 194 đến điểm (4.09, 5.39)', 'Move_to_Target_Task_Robot_194_20251210_173720', NULL, 2151, 50, 409, 539, 0, 55, 10, NULL, NULL),
+	               ('2025-12-10 17:37:25.281722', 'robot_195_operator', '2025-12-10 17:37:25.281722', 'robot_195_operator', 'MOVE',
+	                'Di chuyển robot 195 đến điểm (2.47, 12.97)', 'Move_to_Target_Task_Robot_195_20251210_173725', NULL, 2152, 50, 247, 1297, 0, 55, 10, NULL, NULL),
+	               ('2025-12-10 17:37:29.399994', 'robot_196_operator', '2025-12-10 17:37:29.399994', 'robot_196_operator', 'MOVE',
+	                'Di chuyển robot 196 đến điểm (24.990000000000002, 6.23)', 'Move_to_Target_Task_Robot_196_20251210_173729', NULL, 2153, 50, 2499, 623, 0, 55, 10,
+	                NULL, NULL),
+	               ('2025-12-10 17:37:33.363689', 'robot_197_operator', '2025-12-10 17:37:33.363689', 'robot_197_operator', 'MOVE',
+	                'Di chuyển robot 197 đến điểm (23.89, 12.71)', 'Move_to_Target_Task_Robot_197_20251210_173733', NULL, 2154, 50, 2389, 1271, 0, 55, 10, NULL, NULL)
+	        RETURNING id;
                 """
 
         print("🔄 Thực hiện câu SQL 1: INSERT vào bảng steps...")
         cursor.execute(sql_1)
-        print("✅ Câu SQL 1 hoàn thành")
+        step_ids = [row[0] for row in cursor.fetchall()]
+        print(f"✅ Câu SQL 1 hoàn thành. Step IDs: {step_ids}")
 
-        # Câu SQL thứ 2: INSERT vào bảng runtime_tasks
+        # Câu SQL thứ 2: INSERT vào bảng runtime_tasks với RETURNING id
         sql_2 = """
-		        INSERT INTO public.runtime_tasks (created_at, created_by, updated_at, updated_by, payload_info, payload_weight, priority, task_name, task_type, robot_id,
-		                                          task_template_id, current_runtime_task_step_id, planned_start_time, planned_end_time, actual_start_time,
-		                                          actual_end_time, status, user_id, description, action_reason, assigned_robots, safety_notes, execution_mode, is_repeat,
-		                                          repeat_interval, deleted_at, parent_id)
-		        VALUES ('2025-12-10 17:37:20.613368', 'robot_194_operator', '2025-12-10 17:37:20.613368', 'robot_194_operator', NULL, NULL, NULL,
-		                'Task_Robot_194_20251210_173720', NULL, 194, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
-		                NULL),
-		               ('2025-12-10 17:37:25.29005', 'robot_195_operator', '2025-12-10 17:37:25.29005', 'robot_195_operator', NULL, NULL, NULL,
-		                'Task_Robot_195_20251210_173725', NULL, 195, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
-		                NULL),
-		               ('2025-12-10 17:37:29.411668', 'robot_196_operator', '2025-12-10 17:37:29.411668', 'robot_196_operator', NULL, NULL, NULL,
-		                'Task_Robot_196_20251210_173729', NULL, 196, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
-		                NULL),
-		               ('2025-12-10 17:37:33.374233', 'robot_197_operator', '2025-12-10 17:37:33.374233', 'robot_197_operator', NULL, NULL, NULL,
-		                'Task_Robot_197_20251210_173733', NULL, 197, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
-		                NULL); \
+	        INSERT INTO public.runtime_tasks (created_at, created_by, updated_at, updated_by, payload_info, payload_weight, priority, task_name, task_type, robot_id,
+	                                          task_template_id, current_runtime_task_step_id, planned_start_time, planned_end_time, actual_start_time,
+	                                          actual_end_time, status, user_id, description, action_reason, assigned_robots, safety_notes, execution_mode, is_repeat,
+	                                          repeat_interval, deleted_at, parent_id)
+	        VALUES ('2025-12-10 17:37:20.613368', 'robot_194_operator', '2025-12-10 17:37:20.613368', 'robot_194_operator', NULL, NULL, NULL,
+	                'Task_Robot_194_20251210_173720', NULL, 194, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                NULL),
+	               ('2025-12-10 17:37:25.29005', 'robot_195_operator', '2025-12-10 17:37:25.29005', 'robot_195_operator', NULL, NULL, NULL,
+	                'Task_Robot_195_20251210_173725', NULL, 195, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                NULL),
+	               ('2025-12-10 17:37:29.411668', 'robot_196_operator', '2025-12-10 17:37:29.411668', 'robot_196_operator', NULL, NULL, NULL,
+	                'Task_Robot_196_20251210_173729', NULL, 196, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                NULL),
+	               ('2025-12-10 17:37:33.374233', 'robot_197_operator', '2025-12-10 17:37:33.374233', 'robot_197_operator', NULL, NULL, NULL,
+	                'Task_Robot_197_20251210_173733', NULL, 197, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                NULL)
+	        RETURNING id;
                 """
 
         print("🔄 Thực hiện câu SQL 2: INSERT vào bảng runtime_tasks...")
         cursor.execute(sql_2)
-        print("✅ Câu SQL 2 hoàn thành")
+        task_ids = [row[0] for row in cursor.fetchall()]
+        print(f"✅ Câu SQL 2 hoàn thành. Task IDs: {task_ids}")
 
-        # Câu SQL thứ 3: INSERT vào bảng runtime_tasks_steps
-        sql_3 = """
-		        INSERT INTO public.runtime_tasks_steps (step_id, step_number, runtime_task_id, status, started_at, completed_at, duration, note, result_code, operator_id,
-		                                                execution_mode)
-		        VALUES (119, 0, 119, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-		               (120, 0, 120, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-		               (121, 0, 121, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-		               (122, 0, 122, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL); \
-                """
+        # Câu SQL thứ 3: INSERT vào bảng runtime_tasks_steps sử dụng step_ids và task_ids đã lấy được
+        # Tạo câu SQL động dựa trên các IDs đã lấy được
+        if len(step_ids) == len(task_ids):
+            sql_3_values = []
+            for i, (step_id, task_id) in enumerate(zip(step_ids, task_ids)):
+                sql_3_values.append(f"({step_id}, 0, {task_id}, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
 
-        print("🔄 Thực hiện câu SQL 3: INSERT vào bảng runtime_tasks_steps...")
-        cursor.execute(sql_3)
-        print("✅ Câu SQL 3 hoàn thành")
+            sql_3 = f"""
+            INSERT INTO public.runtime_tasks_steps (step_id, step_number, runtime_task_id, status, started_at, completed_at, duration, note, result_code, operator_id,
+                                                    execution_mode)
+            VALUES {', '.join(sql_3_values)};
+            """
+
+            print("🔄 Thực hiện câu SQL 3: INSERT vào bảng runtime_tasks_steps...")
+            cursor.execute(sql_3)
+            print(f"✅ Câu SQL 3 hoàn thành với {len(step_ids)} bản ghi")
+        else:
+            print(f"❌ Lỗi: Số lượng step_ids ({len(step_ids)}) và task_ids ({len(task_ids)}) không khớp!")
+            connection.rollback()
+            connection.close()
+            return {'success': False, 'step_ids': step_ids, 'task_ids': task_ids}
 
         # Commit tất cả thay đổi
         connection.commit()
@@ -1816,14 +1832,14 @@ def execute_robot_task_queries():
         connection.close()
 
         print("✅ Hoàn thành tất cả 3 câu SQL thành công!")
-        return True
+        return {'success': True, 'step_ids': step_ids, 'task_ids': task_ids}
 
     except Exception as e:
         print(f"❌ Lỗi khi thực hiện SQL: {e}")
         if connection:
             connection.rollback()
             connection.close()
-        return False
+        return {'success': False, 'step_ids': [], 'task_ids': []}
 
 def insert_tasks():
     """
