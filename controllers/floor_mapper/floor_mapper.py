@@ -1785,16 +1785,16 @@ def execute_robot_task_queries():
 	                                          actual_end_time, status, user_id, description, action_reason, assigned_robots, safety_notes, execution_mode, is_repeat,
 	                                          repeat_interval, deleted_at, parent_id)
 	        VALUES ('2025-12-10 17:37:20.613368', 'robot_194_operator', '2025-12-10 17:37:20.613368', 'robot_194_operator', NULL, NULL, NULL,
-	                'Task_Robot_194_20251210_173720', NULL, 194, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                'Task_Robot_194_20251210_173720', NULL, 194, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, 'manual', false, NULL, NULL,
 	                NULL),
 	               ('2025-12-10 17:37:25.29005', 'robot_195_operator', '2025-12-10 17:37:25.29005', 'robot_195_operator', NULL, NULL, NULL,
-	                'Task_Robot_195_20251210_173725', NULL, 195, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                'Task_Robot_195_20251210_173725', NULL, 195, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, 'manual', false, NULL, NULL,
 	                NULL),
 	               ('2025-12-10 17:37:29.411668', 'robot_196_operator', '2025-12-10 17:37:29.411668', 'robot_196_operator', NULL, NULL, NULL,
-	                'Task_Robot_196_20251210_173729', NULL, 196, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                'Task_Robot_196_20251210_173729', NULL, 196, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, 'manual', false, NULL, NULL,
 	                NULL),
 	               ('2025-12-10 17:37:33.374233', 'robot_197_operator', '2025-12-10 17:37:33.374233', 'robot_197_operator', NULL, NULL, NULL,
-	                'Task_Robot_197_20251210_173733', NULL, 197, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL,
+	                'Task_Robot_197_20251210_173733', NULL, 197, NULL, NULL, NULL, NULL, NULL, NULL, 'PENDING', NULL, NULL, NULL, NULL, NULL, 'manual', false, NULL, NULL,
 	                NULL)
 	        RETURNING id;
                 """
