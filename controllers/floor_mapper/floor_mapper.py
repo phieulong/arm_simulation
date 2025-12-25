@@ -1762,7 +1762,7 @@ def execute_robot_task_queries():
 	                                  speed_suggestion, to_map_object_x, to_map_object_y, to_map_object_theta, robot_type_id, accuracy_tolerance, deleted_at,
 	                                  deleted_by)
 	        VALUES ('2025-12-10 17:37:20.602567', 'robot_194_operator', '2025-12-10 17:37:20.602567', 'robot_194_operator', 'MOVE',
-	                'Di chuyển robot 194 đến điểm (4.09, 5.39)', 'Move_to_Target_Task_Robot_194_20251210_173720', NULL, 2151, 50, 409, 539, 0, 55, 10, NULL, NULL),
+	                'Di chuyển robot 194 đến điểm (5.05, 5.39)', 'Move_to_Target_Task_Robot_194_20251210_173720', NULL, 2151, 50, 505, 539, 0, 55, 10, NULL, NULL),
 	               ('2025-12-10 17:37:25.281722', 'robot_195_operator', '2025-12-10 17:37:25.281722', 'robot_195_operator', 'MOVE',
 	                'Di chuyển robot 195 đến điểm (2.47, 12.97)', 'Move_to_Target_Task_Robot_195_20251210_173725', NULL, 2152, 50, 247, 1297, 0, 55, 10, NULL, NULL),
 	               ('2025-12-10 17:37:29.399994', 'robot_196_operator', '2025-12-10 17:37:29.399994', 'robot_196_operator', 'MOVE',
