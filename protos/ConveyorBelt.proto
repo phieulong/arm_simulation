@@ -42,7 +42,7 @@ PROTO ConveyorBelt [
     translation IS translation
     rotation IS rotation
     name IS name
-    controller "conveyor_belt"
+    controller "generic"
     controllerArgs [
       %<= '"' + fields.speed.value + '"' >%
       %<= '"' + fields.timer.value + '"' >%
