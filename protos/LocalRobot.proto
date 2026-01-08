@@ -1,0 +1,731 @@
+#VRML_SIM R2025a utf8
+# license: Apache License 2.0
+# license url: http://www.apache.org/licenses/LICENSE-2.0
+# This is a proto file for Webots for the robot
+# Extracted from: /Users/nguyenquangnhat/Documents/Robot.urdf
+
+PROTO robot [
+  field  SFVec3f     translation     0 0 0
+  field  SFRotation  rotation        0 0 1 0
+  field  SFString    name            "robot"  # Is `Robot.name`.
+  field  SFString    controller      "void"   # Is `Robot.controller`.
+  field  MFString    controllerArgs  []       # Is `Robot.controllerArgs`.
+  field  SFString    customData      ""       # Is `Robot.customData`.
+  field  SFBool      supervisor      FALSE    # Is `Robot.supervisor`.
+  field  SFBool      synchronization TRUE     # Is `Robot.synchronization`.
+  field  SFBool      selfCollision   FALSE    # Is `Robot.selfCollision`.
+  field  SFBool      staticBase      TRUE     # Defines if the robot base should be pinned to the static environment.
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    synchronization IS synchronization
+    selfCollision IS selfCollision
+    children [
+      Pose {
+        translation 0.037500 0.000500 0.334000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.774000 0.461000 0.040000
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037500 0.000500 0.262000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.857000 0.440000 0.096000
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037500 -0.250000 0.262000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.774000 0.041000 0.096000
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037500 0.250000 0.262000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.774000 0.041000 0.096000
+            }
+          }
+        ]
+      }
+      Pose {
+        translation -0.355500 -0.235300 0.262000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Cylinder {
+              radius 0.054
+              height 0.096
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.430600 0.236400 0.262000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Cylinder {
+              radius 0.054
+              height 0.096
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.415000 -0.221000 0.262000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Cylinder {
+              radius 0.049
+              height 0.096
+            }
+          }
+        ]
+      }
+      Pose {
+        translation -0.341000 0.222000 0.262000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Cylinder {
+              radius 0.049
+              height 0.096
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037330 0.000500 0.204000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.780600 0.466500 0.040000
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037400 0.000500 0.160000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.851500 0.536000 0.039000
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037400 0.258600 0.094250
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.350000 0.040000 0.092500
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037400 -0.247600 0.094250
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.350000 0.040000 0.092500
+            }
+          }
+        ]
+      }
+      Pose {
+        translation 0.037500 0.000500 0.094000
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.857000 0.200000 0.092000
+            }
+          }
+        ]
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis -0.000000 -0.000000 1.000000
+          anchor -0.270154 -0.203000 0.156500
+        }
+        device [
+          RotationalMotor {
+            name "back_right_wheel_joint"
+            maxVelocity 100.0
+            maxTorque 20.0
+          }
+          PositionSensor {
+            name "back_right_wheel_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation -0.270154 -0.203000 0.156500
+          rotation 0.000021 0.000021 -1.000000 1.771739
+          children [
+            Pose {
+              translation 0.000074 -0.000026 -0.022354
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.500000 0.500000 0.500000
+                    roughness 1.000000
+                    metalness 0
+                  }
+                  geometry Cylinder {
+                    radius 0.0298
+                    height 0.055
+                  }
+                }
+              ]
+            }
+          ]
+          name "br_caster_rotation_link"
+          boundingObject Cylinder {
+            radius 0.0298
+            height 0.055
+          }
+          physics Physics {
+          }
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis -0.000000 -0.000000 1.000000
+          anchor -0.270154 0.203000 0.156500
+        }
+        device [
+          RotationalMotor {
+            name "back_left_wheel_joint"
+            maxVelocity 100.0
+            maxTorque 20.0
+          }
+          PositionSensor {
+            name "back_left_wheel_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation -0.270154 0.203000 0.156500
+          rotation 0.000010 0.000014 -1.000000 1.771451
+          children [
+            Pose {
+              translation 0.000014 -0.000063 -0.021773
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.500000 0.500000 0.500000
+                    roughness 1.000000
+                    metalness 0
+                  }
+                  geometry Cylinder {
+                    radius 0.0298
+                    height 0.055
+                  }
+                }
+              ]
+            }
+          ]
+          name "bl_caster_rotation_link"
+          boundingObject Cylinder {
+            radius 0.0298
+            height 0.055
+          }
+          physics Physics {
+          }
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis -0.000000 -0.000000 1.000000
+          anchor 0.341346 -0.203000 0.156500
+        }
+        device [
+          RotationalMotor {
+            name "front_right_wheel_joint"
+            maxVelocity 100.0
+            maxTorque 20.0
+          }
+          PositionSensor {
+            name "front_right_wheel_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation 0.341346 -0.203000 0.156500
+          rotation 0.000026 0.000026 -1.000000 1.771574
+          children [
+            Pose {
+              translation 0.000130 -0.000092 -0.019019
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.500000 0.500000 0.500000
+                    roughness 1.000000
+                    metalness 0
+                  }
+                  geometry Cylinder {
+                    radius 0.0298
+                    height 0.055
+                  }
+                }
+              ]
+            }
+          ]
+          name "fr_caster_rotation_link"
+          boundingObject Cylinder {
+            radius 0.0298
+            height 0.055
+          }
+          physics Physics {
+          }
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis -0.000000 -0.000000 1.000000
+          anchor 0.341346 0.203000 0.156500
+        }
+        device [
+          RotationalMotor {
+            name "front_left_wheel_joint"
+            maxVelocity 100.0
+            maxTorque 20.0
+          }
+          PositionSensor {
+            name "front_left_wheel_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation 0.341346 0.203000 0.156500
+          rotation 0.000017 0.000020 -1.000000 1.771333
+          children [
+            Pose {
+              translation 0.000093 0.000345 -0.019019
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.500000 0.500000 0.500000
+                    roughness 1.000000
+                    metalness 0
+                  }
+                  geometry Cylinder {
+                    radius 0.0298
+                    height 0.055
+                  }
+                }
+              ]
+            }
+          ]
+          name "fl_caster_rotation_link"
+          boundingObject Cylinder {
+            radius 0.0298
+            height 0.055
+          }
+          physics Physics {
+          }
+        }
+      }
+      Solid {
+        translation 0.415448 0.108238 0.080000
+        rotation 0.862856 0.357407 0.357407 1.717770
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.001000 0.050000 0.022300
+            }
+          }
+          Pose {
+            translation 0.005700 0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+          Pose {
+            translation 0.005700 -0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+        ]
+        name "ds3"
+        boundingObject Group {
+          children [
+            Box {
+               size 0.001000 0.050000 0.022300
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+          ]
+        }
+        physics Physics {
+        }
+      }
+      Solid {
+        translation -0.384400 0.132800 0.156000
+        rotation -0.000000 0.000000 1.000000 3.141593
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.001000 0.050000 0.022300
+            }
+          }
+          Pose {
+            translation 0.005700 0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+          Pose {
+            translation 0.005700 -0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+        ]
+        name "ds2"
+        boundingObject Group {
+          children [
+            Box {
+               size 0.001000 0.050000 0.022300
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+          ]
+        }
+        physics Physics {
+        }
+      }
+      Solid {
+        translation -0.384400 -0.132800 0.156000
+        rotation -0.000000 0.000000 1.000000 3.141593
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.001000 0.050000 0.022300
+            }
+          }
+          Pose {
+            translation 0.005700 0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+          Pose {
+            translation 0.005700 -0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+        ]
+        name "ds1"
+        boundingObject Group {
+          children [
+            Box {
+               size 0.001000 0.050000 0.022300
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+          ]
+        }
+        physics Physics {
+        }
+      }
+      Solid {
+        translation 0.415448 -0.108238 0.080000
+        rotation 0.862856 -0.357407 -0.357407 1.717770
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry Box {
+               size 0.001000 0.050000 0.022300
+            }
+          }
+          Pose {
+            translation 0.005700 0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+          Pose {
+            translation 0.005700 -0.012800 0.000000
+            rotation -0.000000 1.000000 -0.000000 1.570800
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.500000 0.500000 0.500000
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry Cylinder {
+                  radius 0.01
+                  height 0.012
+                }
+              }
+            ]
+          }
+        ]
+        name "ds0"
+        boundingObject Group {
+          children [
+            Box {
+               size 0.001000 0.050000 0.022300
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+            Cylinder {
+              radius 0.01
+              height 0.012
+            }
+          ]
+        }
+        physics Physics {
+        }
+      }
+    ]
+    name IS name
+    boundingObject Group {
+      children [
+        Box {
+           size 0.774000 0.461000 0.040000
+        }
+        Box {
+           size 0.857000 0.440000 0.096000
+        }
+        Box {
+           size 0.774000 0.041000 0.096000
+        }
+        Box {
+           size 0.774000 0.041000 0.096000
+        }
+        Cylinder {
+          radius 0.054
+          height 0.096
+        }
+        Cylinder {
+          radius 0.054
+          height 0.096
+        }
+        Cylinder {
+          radius 0.049
+          height 0.096
+        }
+        Cylinder {
+          radius 0.049
+          height 0.096
+        }
+        Box {
+           size 0.780600 0.466500 0.040000
+        }
+        Box {
+           size 0.851500 0.536000 0.039000
+        }
+        Box {
+           size 0.350000 0.040000 0.092500
+        }
+        Box {
+           size 0.350000 0.040000 0.092500
+        }
+        Box {
+           size 0.857000 0.200000 0.092000
+        }
+      ]
+    }
+  }
+}

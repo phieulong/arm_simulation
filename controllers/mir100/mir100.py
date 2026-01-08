@@ -24,32 +24,29 @@ motor_front_right_joint = robot.getDevice("front_right_wheel_joint")
 motor_back_left_joint = robot.getDevice("back_left_wheel_joint")
 motor_back_right_joint = robot.getDevice("back_right_wheel_joint")
 
+motor_front_left_joint.setPosition(float("inf"))
+motor_front_right_joint.setPosition(float("inf"))
+motor_back_left_joint.setPosition(float("inf"))
+motor_back_right_joint.setPosition(float("inf"))
+
+motor_front_left_joint.setVelocity(0.0)
+motor_front_right_joint.setVelocity(0.0)
+motor_back_left_joint.setVelocity(0.0)
+motor_back_right_joint.setVelocity(0.0)
 
 motor_front_left = robot.getDevice("front_left_wheel")
 motor_front_right = robot.getDevice("front_right_wheel")
 motor_back_left = robot.getDevice("back_left_wheel")
 motor_back_right = robot.getDevice("back_right_wheel")
 
-
-motor_front_left_joint.setPosition(float("inf"))
-motor_back_left_joint.setPosition(float("inf"))
-motor_front_right_joint.setPosition(float("inf"))
-motor_back_right_joint.setPosition(float("inf"))
-
 motor_front_left.setPosition(float("inf"))
-motor_back_left.setPosition(float("inf"))
 motor_front_right.setPosition(float("inf"))
+motor_back_left.setPosition(float("inf"))
 motor_back_right.setPosition(float("inf"))
 
-motor_front_left_joint.setVelocity(0.0)
-motor_back_left_joint.setVelocity(0.0)
-motor_front_right_joint.setVelocity(0.0)
-motor_back_right_joint.setVelocity(0.0)
-
-
 motor_front_left.setVelocity(0.0)
-motor_back_left.setVelocity(0.0)
 motor_front_right.setVelocity(0.0)
+motor_back_left.setVelocity(0.0)
 motor_back_right.setVelocity(0.0)
 
 # ===== Sensors =====
@@ -82,10 +79,10 @@ while robot.step(time_step) != -1:
         target_speed = -6
 
     elif key == Keyboard.LEFT:
-        target_omega = 3
+        target_omega = -1
 
     elif key == Keyboard.RIGHT:
-        target_omega = 3
+        target_omega = 1
 
     elif key == ord(' '):
         target_speed = 0.0
@@ -106,8 +103,9 @@ while robot.step(time_step) != -1:
         motor_back_left_joint.setVelocity(target_omega)
         motor_back_right_joint.setVelocity(target_omega)
 
-        motor_front_left.setVelocity(target_speed)
-        motor_front_right.setVelocity(target_speed)
         motor_back_left.setVelocity(target_speed)
         motor_back_right.setVelocity(target_speed)
+        motor_front_left.setVelocity(target_speed)
+        motor_front_right.setVelocity(target_speed)
+
 
