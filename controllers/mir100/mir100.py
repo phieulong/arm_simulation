@@ -5,7 +5,6 @@ import math
 from controller import Robot
 from asyncua import Server, ua
 import threading, time
-from datetime import datetime
 from flask import Flask
 import cv2
 import numpy as np
@@ -15,7 +14,7 @@ import json
 
 # ==== Redis Client ====
 redis_client = redis.Redis(host="192.168.0.71", port=26379, db=0, decode_responses=True)
-REDIS_APRILTAG_CHANNEL = "apriltag_detection"
+REDIS_APRILTAG_CHANNEL = "apriltag_detection_194"
 REDIS_APRILTAG_KEY = "apriltag_latest"
 
 # ==== Imports và khởi tạo apriltag dectector ====
@@ -44,9 +43,9 @@ CAMERA_HEIGHT = 720
 CAMERA_FOCAL_LENGTH = (CAMERA_WIDTH / 2.0) / np.tan(CAMERA_FOV_RAD / 2.0)
 
 # Kích thước thực của AprilTag (cm) - điều chỉnh theo tag thực tế
-APRILTAG_SIZE_CM = 16.0  # Kích thước cạnh của AprilTag (cm)
+APRILTAG_SIZE_CM = 5  # Kích thước cạnh của AprilTag (cm)
 
-def analyze_apriltag_offset(image, depth_image=None):
+def analyze_apriltag_offset(image):
     """
     Phân tích vị trí AprilTag và trả về khoảng cách lệch trái/phải thực tế (cm) và chiều sâu
 
@@ -81,72 +80,39 @@ def analyze_apriltag_offset(image, depth_image=None):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
         gray = image
-
     h, w = gray.shape
 
     # ---- 2. Detect AprilTag ----
     detections = _apriltag_detector.detect(gray)
-
     if len(detections) == 0:
         return None, None, None
 
-    # ---- 3. Lấy tag đầu tiên (hoặc chọn theo ID nếu cần) ----
+    # ---- 3. Tính khoảng cách (chiều sâu) từ depth_camera ----
+    width = range_finder.getWidth()
+    height = range_finder.getHeight()
+    range_image = range_finder.getRangeImage()
+    depth_2d = np.array(range_image).reshape((height, width))
+    cx = width // 2
+    cy = height // 2
+    distance_m = depth_2d[cy, cx]
+    distance_cm = distance_m * 100
+
+    # ---- 4. Lấy tag đầu tiên (hoặc chọn theo ID nếu cần) ----
     tag = detections[0]
     corners = tag.corners
     cx, cy = tag.center
-
-    # ---- 4. Tính khoảng cách (chiều sâu) từ depth_camera ----
-    distance_cm = None
-
-    if depth_image is not None:
-        # Lấy depth tại tâm của AprilTag
-        cx_int, cy_int = int(cx), int(cy)
-
-        # Đảm bảo tọa độ nằm trong phạm vi ảnh
-        cx_int = max(0, min(cx_int, depth_image.shape[1] - 1))
-        cy_int = max(0, min(cy_int, depth_image.shape[0] - 1))
-
-        # Lấy depth value (mét) và chuyển sang cm
-        # Lấy trung bình vùng 5x5 pixels xung quanh tâm để giảm nhiễu
-        half_size = 2
-        y_start = max(0, cy_int - half_size)
-        y_end = min(depth_image.shape[0], cy_int + half_size + 1)
-        x_start = max(0, cx_int - half_size)
-        x_end = min(depth_image.shape[1], cx_int + half_size + 1)
-
-        depth_region = depth_image[y_start:y_end, x_start:x_end]
-
-        # Lọc bỏ các giá trị vô cực hoặc NaN
-        valid_depths = depth_region[(depth_region > 0) & (np.isfinite(depth_region))]
-
-        if len(valid_depths) > 0:
-            depth_m = np.median(valid_depths)  # Dùng median để robust hơn
-            distance_cm = depth_m * 100.0  # Chuyển từ mét sang cm
-
-    # ---- 5. Nếu không có depth_image, ước lượng từ kích thước tag ----
-    if distance_cm is None:
-        # Lấy kích thước trung bình của 4 cạnh
-        side1 = np.linalg.norm(corners[1] - corners[0])
-        side2 = np.linalg.norm(corners[2] - corners[1])
-        side3 = np.linalg.norm(corners[3] - corners[2])
-        side4 = np.linalg.norm(corners[0] - corners[3])
-        tag_size_px = (side1 + side2 + side3 + side4) / 4.0
-
-        # Công thức: distance = (real_size * focal_length) / pixel_size
-        distance_cm = (APRILTAG_SIZE_CM * CAMERA_FOCAL_LENGTH) / tag_size_px
-
-    # ---- 6. Tính offset pixel so với tâm ảnh ----
     offset_px = cx - (w / 2.0)
 
-    # ---- 7. Chuyển offset từ pixel sang cm ----
+    # ---- 5. Chuyển offset từ pixel sang cm ----
     # Sử dụng similar triangles: offset_cm / distance_cm = offset_px / focal_length
     lateral_offset_cm = (offset_px * distance_cm) / CAMERA_FOCAL_LENGTH
 
-    # ---- 8. Lệch góc (yaw) của AprilTag ----
+    # ---- 6. Lệch góc (yaw) của AprilTag ----
     # vector cạnh trên của tag: corner 0 -> corner 1
     v = corners[1] - corners[0]
     yaw_rad = np.arctan2(v[1], v[0])
     yaw_deg = np.degrees(yaw_rad)
+    print(lateral_offset_cm, yaw_deg, distance_cm)
 
     return lateral_offset_cm, yaw_deg, distance_cm
 
@@ -189,8 +155,11 @@ motor_back_right.setVelocity(0.0)
 motor_front.setVelocity(0.0)
 
 # ===== Sensors =====
-depth_camera = robot.getDevice("depth_camera")
-depth_camera.enable(time_step)
+
+
+range_finder = robot.getDevice("depth_camera")
+range_finder.enable(time_step)
+
 
 camera = robot.getDevice("camera")
 camera.enable(time_step)
@@ -257,13 +226,9 @@ class MonitorBodyHeadingTask(MonitorTask):
 
     def check_and_execute(self):
         current_heading = get_current_robot_heading()
-        print("Initial heading:", self.initial_heading)
-        print("Current heading :", current_heading)
         heading_diff = abs(abs(current_heading) - abs(self.initial_heading))
-        print(f"Waiting to reach target heading...: {heading_diff} vs {self.target_radian}")
 
         if abs(heading_diff - self.target_radian) <= 0.006:
-            print(f"Target heading reached: {heading_diff} with target {self.target_radian}")
             set_velocity(0, 0, 0)
             self.completed = True
             # Quay bánh xe về vị trí ban đầu
@@ -337,32 +302,22 @@ last_gps_update = 0
 last_imu_update = 0
 cached_gps_data = (0, 0)
 cached_heading = 0
-GPS_UPDATE_INTERVAL = 0.1
-IMU_UPDATE_INTERVAL = 0.05
+GPS_UPDATE_INTERVAL = 0.0
+IMU_UPDATE_INTERVAL = 0.3
 
 def get_current_robot_pose():
     global last_gps_update, cached_gps_data
     current_time = time.time()
-
-    if current_time - last_gps_update > GPS_UPDATE_INTERVAL:
-        gps_values = gps.getValues()
-        cached_gps_data = (gps_values[0], gps_values[1])
-        last_gps_update = current_time
-
-    return cached_gps_data
+    gps_values = gps.getValues()
+    return gps_values[0], gps_values[1]
 
 def get_current_robot_heading():
     global last_imu_update, cached_heading
     current_time = time.time()
-
-    if current_time - last_imu_update > IMU_UPDATE_INTERVAL:
-        rpy = imu.getRollPitchYaw()
-        yaw = rpy[2]
-        yaw = round(yaw, 6) + 1.570798
-        cached_heading = math.atan2(math.sin(yaw), math.cos(yaw))
-        last_imu_update = current_time
-
-    return cached_heading
+    rpy = imu.getRollPitchYaw()
+    yaw = rpy[2]
+    yaw = round(yaw, 6) + 1.570798
+    return math.atan2(math.sin(yaw), math.cos(yaw))
 
 def get_current_robot_front_wheel_in_radiant():
     value = robot_front_wheel_radian_sensor.getValue()
@@ -385,14 +340,20 @@ def get_current_robot_back_right_wheel_in_radiant():
 # ==== OPC UA Server ====
 class RobotCommandServer:
     def __init__(self, endpoint="opc.tcp://0.0.0.0:4840/freeopcua/server/"):
-        self.sub = None
+        self.allWheelSpeedSub = None
+        self.bodyTurnSub = None
+        self.frontWheelSpeedSub = None
+        self.backWheelsSpeedSub = None
+        self.turnAllWheelsSub = None
         self.server = Server()
         self.endpoint = endpoint
         self.forward_var = None
         self.namespace_idx = None
         self.all_wheel_speed_var = None
-        self.all_wheel_turn_var = None
-        self.turn_front_var = None
+        self.body_turn_var = None
+        self.front_wheel_speed_var = None
+        self.back_wheels_speed_var = None
+        self.turn_all_wheels_var = None
         self.is_monitoring = False
         self.monitor_thread = None
         self.last_processed_command = None  # Để tránh xử lý command trùng lặp
@@ -416,35 +377,106 @@ class RobotCommandServer:
             ua.Variant(0.0, ua.VariantType.Float)
         )
         await self.all_wheel_speed_var.set_writable(True)
-
-        # Biến điều khiển quay 3 bánh
-        self.all_wheel_turn_var = await robot_device.add_variable(
-            self.namespace_idx,
-            "AllWheelTurn",
-            ua.Variant(0.0, ua.VariantType.Float)
-        )
-        await self.all_wheel_turn_var.set_writable(True)
         print(f"AllWheelSpeed NodeId: NamespaceId { self.all_wheel_speed_var.nodeid.NamespaceIndex}, NodeId {self.all_wheel_speed_var.nodeid.Identifier}", )
 
+        # Biến điều khiển quay 3 bánh
+        self.body_turn_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "BodyTurn",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.body_turn_var.set_writable(True)
+        print(f"BodyTurn NodeId: NamespaceId { self.body_turn_var.nodeid.NamespaceIndex}, NodeId {self.body_turn_var.nodeid.Identifier}", )
+
+        self.front_wheel_speed_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "FrontWheelSpeed",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.front_wheel_speed_var.set_writable(True)
+        print(f"FrontWheelSpeed NodeId: NamespaceId { self.front_wheel_speed_var.nodeid.NamespaceIndex}, NodeId {self.front_wheel_speed_var.nodeid.Identifier}", )
+
+        self.back_wheels_speed_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "FrontWheelSpeed",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.back_wheels_speed_var.set_writable(True)
+        print(f"FrontWheelSpeed NodeId: NamespaceId { self.back_wheels_speed_var.nodeid.NamespaceIndex}, NodeId {self.back_wheels_speed_var.nodeid.Identifier}", )
+
+        self.turn_all_wheels_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "TurnAllWheels",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.turn_all_wheels_var.set_writable(True)
+        print(f"TurnAllWheels NodeId: NamespaceId { self.turn_all_wheels_var.nodeid.NamespaceIndex}, NodeId {self.turn_all_wheels_var.nodeid.Identifier}", )
+
+
     async def setup_internal_subscription(self):
-        class Handler:
+        class AllWheelSpeedHandler:
             @staticmethod
             def datachange_notification(node, val, data):
-                print("🚨 VALUE CHANGED")
+                print("🚨 ALL WHEEL SPEEDS CHANGED")
                 print("NodeId:", node.nodeid)
                 print("Value:", val)
-                if node.nodeid.Identifier == self.all_wheel_speed_var.nodeid.Identifier:
-                    set_velocity(val, val, val)
-                elif node.nodeid.Identifier == self.all_wheel_turn_var.nodeid.Identifier:
-                    if val is not None and val != 0.0:
-                        radiant = val / 180 * math.pi
-                        turn_body(radiant)
+                set_velocity(val*0.93, val*0.93, val)
 
-        handler = Handler()
-        self.sub = await self.server.create_subscription(0, handler)
+        class BodyTurnHandler:
+            @staticmethod
+            def datachange_notification(node, val, data):
+                print("🚨 BODY TURN CHANGED")
+                print("NodeId:", node.nodeid)
+                print("Value:", val)
+                if val is not None and val != 0.0:
+                    radiant = val / 180 * math.pi
+                    turn_body(radiant)
 
-        await self.sub.subscribe_data_change(self.all_wheel_speed_var)
-        await self.sub.subscribe_data_change(self.all_wheel_turn_var)
+        class FrontWheelSpeedHandler:
+            @staticmethod
+            def datachange_notification(node, val, data):
+                print("🚨 FRONT WHEEL SPEED CHANGED")
+                print("NodeId:", node.nodeid)
+                print("Value:", val)
+                motor_front.setVelocity(val)
+
+        class BackWheelsSpeedHandler:
+            @staticmethod
+            def datachange_notification(node, val, data):
+                print("🚨 BACK WHEELS SPEED CHANGED")
+                print("NodeId:", node.nodeid)
+                print("Value:", val)
+                motor_back_right.setVelocity(val)
+                motor_back_left.setVelocity(val)
+
+
+        class TurnAllWheelsHandler:
+            @staticmethod
+            def datachange_notification(node, val, data):
+                print("🚨 TURN ALL WHEELS CHANGED")
+                print("NodeId:", node.nodeid)
+                print("Value:", val)
+                if val is not None and val != 0.0:
+                    radiant = val / 180 * math.pi
+                    add_turn_all_wheels_task(radiant, 1, None)
+
+        all_wheel_speed_handler = AllWheelSpeedHandler()
+        body_turn_handler = BodyTurnHandler()
+        front_wheel_speed_handler = FrontWheelSpeedHandler()
+        back_wheels_speed_handler = BackWheelsSpeedHandler()
+        turn_all_wheels_handler = TurnAllWheelsHandler()
+
+        self.allWheelSpeedSub = await self.server.create_subscription(0, all_wheel_speed_handler)
+        self.bodyTurnSub = await self.server.create_subscription(0, body_turn_handler)
+        self.frontWheelSpeedSub = await self.server.create_subscription(0, front_wheel_speed_handler)
+        self.backWheelsSpeedSub = await self.server.create_subscription(0, back_wheels_speed_handler)
+        self.turnAllWheelsSub = await self.server.create_subscription(0, turn_all_wheels_handler)
+
+        await self.allWheelSpeedSub.subscribe_data_change(self.all_wheel_speed_var)
+        await self.bodyTurnSub.subscribe_data_change(self.body_turn_var)
+        await self.frontWheelSpeedSub.subscribe_data_change(self.front_wheel_speed_var)
+        await self.backWheelsSpeedSub.subscribe_data_change(self.back_wheels_speed_var)
+        await self.turnAllWheelsSub.subscribe_data_change(self.turn_all_wheels_var)
 
     async def run(self):
         await self.setup_server()
@@ -502,8 +534,6 @@ print("🔄 Starting Webots simulation loop...")
 # Lấy kích thước camera
 camera_width = camera.getWidth()
 camera_height = camera.getHeight()
-depth_camera_width = depth_camera.getWidth()
-depth_camera_height = depth_camera.getHeight()
 
 # Counter để giảm tần suất xử lý apriltag (không cần mỗi frame)
 apriltag_check_counter = 0
@@ -522,12 +552,6 @@ while robot.step(time_step) != -1:
         # Lấy ảnh từ camera
         camera_data = camera.getImage()
 
-        # Lấy depth image từ depth_camera
-        depth_data = depth_camera.getRangeImage()
-        depth_image = None
-        if depth_data:
-            # Chuyển đổi depth data sang numpy array (float32, đơn vị mét)
-            depth_image = np.array(depth_data, dtype=np.float32).reshape((depth_camera_height, depth_camera_width))
 
         if camera_data:
             # Chuyển đổi từ raw bytes sang numpy array (BGRA format)
@@ -536,18 +560,16 @@ while robot.step(time_step) != -1:
             image_bgr = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
 
             # Phân tích AprilTag với depth image
-            lateral_offset_cm, yaw_deg, distance_cm = analyze_apriltag_offset(image_bgr, depth_image)
+            lateral_offset_cm, yaw_deg, distance_cm = analyze_apriltag_offset(image_bgr)
 
             if lateral_offset_cm is not None:
-                print(f"📍 AprilTag detected: lateral_offset={lateral_offset_cm:.2f}cm, yaw={yaw_deg:.2f}°, distance={distance_cm:.2f}cm")
-
                 # Publish kết quả vào Redis
                 try:
                     apriltag_data = {
                         "timestamp": time.time_ns(),
-                        "lateral_offset_cm": round(lateral_offset_cm, 2),
-                        "yaw_deg": round(yaw_deg, 2),
-                        "distance_cm": round(distance_cm, 2),
+                        "lateral_offset_cm": round(float(lateral_offset_cm), 2),
+                        "yaw_deg": round(float(yaw_deg), 2),
+                        "distance_cm": round(float(distance_cm), 2),
                         "detected": True
                     }
                     apriltag_json = json.dumps(apriltag_data)

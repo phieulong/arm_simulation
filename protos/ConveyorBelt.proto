@@ -182,7 +182,7 @@ PROTO ConveyorBelt [
             }
           }
           geometry Box {
-            size 0.001 0.3 0.2
+            size 0.0005 0.15 0.1
           }
         }
       ]
