@@ -13,7 +13,7 @@ import redis
 import json
 
 # ==== Redis Client ====
-redis_client = redis.Redis(host="192.168.0.71", port=26379, db=0, decode_responses=True)
+redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 REDIS_APRILTAG_CHANNEL = "apriltag_detection_194"
 REDIS_APRILTAG_KEY = "apriltag_latest"
 
@@ -130,29 +130,29 @@ robot = Robot()
 time_step = int(robot.getBasicTimeStep())
 
 # ===== Motors =====
-motor_back_left_joint = robot.getDevice("back_left_wheel_joint")
-motor_back_right_joint = robot.getDevice("back_right_wheel_joint")
-motor_front_joint = robot.getDevice("front_wheel_joint")
+motor_steering_front = robot.getDevice("front_wheel_joint")
+motor_steering_back = robot.getDevice("back_wheel_joint")
+motor_steering_middle = robot.getDevice("middle_wheel_joint")
 
-motor_back_left_joint.setPosition(float("inf"))
-motor_back_right_joint.setPosition(float("inf"))
-motor_front_joint.setPosition(float("inf"))
+motor_steering_front.setPosition(float("inf"))
+motor_steering_back.setPosition(float("inf"))
+motor_steering_middle.setPosition(float("inf"))
 
-motor_back_left_joint.setVelocity(0.0)
-motor_back_right_joint.setVelocity(0.0)
-motor_front_joint.setVelocity(0.0)
+motor_steering_front.setVelocity(0.0)
+motor_steering_back.setVelocity(0.0)
+motor_steering_middle.setVelocity(0.0)
 
-motor_back_left = robot.getDevice("back_left_wheel")
-motor_back_right = robot.getDevice("back_right_wheel")
 motor_front = robot.getDevice("front_wheel")
+motor_back = robot.getDevice("back_wheel")
+motor_middle = robot.getDevice("middle_wheel")
 
-motor_back_left.setPosition(float("inf"))
-motor_back_right.setPosition(float("inf"))
 motor_front.setPosition(float("inf"))
+motor_back.setPosition(float("inf"))
+motor_middle.setPosition(float("inf"))
 
-motor_back_left.setVelocity(0.0)
-motor_back_right.setVelocity(0.0)
 motor_front.setVelocity(0.0)
+motor_back.setVelocity(0.0)
+motor_middle.setVelocity(0.0)
 
 # ===== Sensors =====
 
@@ -170,14 +170,14 @@ gps.enable(time_step)
 imu = robot.getDevice("inertial unit")
 imu.enable(time_step)
 
-robot_front_wheel_radian_sensor = robot.getDevice("front_caster_joint_sensor")
-robot_front_wheel_radian_sensor.enable(time_step)
+front_steering_angle = robot.getDevice("front_caster_joint_sensor")
+front_steering_angle.enable(time_step)
 
-robot_back_left_wheel_radian_sensor = robot.getDevice("back_left_caster_joint_sensor")
-robot_back_left_wheel_radian_sensor.enable(time_step)
+back_steering_angle = robot.getDevice("back_caster_joint_sensor")
+back_steering_angle.enable(time_step)
 
-robot_back_right_wheel_radian_sensor = robot.getDevice("back_right_caster_joint_sensor")
-robot_back_right_wheel_radian_sensor.enable(time_step)
+middle_steering_angle = robot.getDevice("middle_caster_joint_sensor")
+middle_steering_angle.enable(time_step)
 
 # ===== Task Queue cho Main Loop =====
 # Thay thế time.sleep bằng hệ thống task-based
@@ -194,7 +194,7 @@ class MonitorTask:
     def is_completed(self):
         return self.completed
 
-class MonitorWheelAngleTask(MonitorTask):
+class FrontMonitorWheelAngleTask(MonitorTask):
     """Task để monitor góc bánh xe"""
     def __init__(self, target_radian, callback=None):
         super().__init__()
@@ -202,37 +202,52 @@ class MonitorWheelAngleTask(MonitorTask):
         self.callback = callback
 
     def check_and_execute(self):
-        current_angle = get_current_robot_front_wheel_in_radiant()
-        # print(f"Current front wheel angle: {current_angle} with target {self.target_radian}")
+        current_angle = get_current_front_wheel_angel()
 
         if abs(current_angle - self.target_radian) <= 0.006:
             # Đạt mục tiêu - dừng motor
-            motor_front_joint.setVelocity(0)
-            motor_back_left_joint.setVelocity(0)
-            motor_back_right_joint.setVelocity(0)
+            motor_steering_front.setVelocity(0)
             self.completed = True
             if self.callback is not None:
                 self.callback()
             return True
         return False
 
-class MonitorBodyHeadingTask(MonitorTask):
-    """Task để monitor heading của robot"""
-    def __init__(self, initial_heading, target_radian, callback=None):
+class BackMonitorWheelAngleTask(MonitorTask):
+    """Task để monitor góc bánh xe"""
+    def __init__(self, target_radian, callback=None):
         super().__init__()
-        self.initial_heading = initial_heading
         self.target_radian = target_radian
         self.callback = callback
 
     def check_and_execute(self):
-        current_heading = get_current_robot_heading()
-        heading_diff = abs(abs(current_heading) - abs(self.initial_heading))
+        current_angle = get_current_back_wheel_angel()
 
-        if abs(heading_diff - self.target_radian) <= 0.006:
-            set_velocity(0, 0, 0)
+        if abs(current_angle - self.target_radian) <= 0.006:
+            # Đạt mục tiêu - dừng motor
+            motor_steering_back.setVelocity(0)
             self.completed = True
-            # Quay bánh xe về vị trí ban đầu
-            add_turn_all_wheels_task(0, -1, self.callback)
+            if self.callback is not None:
+                self.callback()
+            return True
+        return False
+
+class MiddleMonitorWheelAngleTask(MonitorTask):
+    """Task để monitor góc bánh xe"""
+    def __init__(self, target_radian, callback=None):
+        super().__init__()
+        self.target_radian = target_radian
+        self.callback = callback
+
+    def check_and_execute(self):
+        current_angle = get_current_middle_wheel_angel()
+
+        if abs(current_angle - self.target_radian) <= 0.006:
+            # Đạt mục tiêu - dừng motor
+            motor_steering_middle.setVelocity(0)
+            self.completed = True
+            if self.callback is not None:
+                self.callback()
             return True
         return False
 
@@ -264,35 +279,10 @@ def process_tasks():
 
 # ==== Hàm set tốc độ ====
 def set_velocity(left_speed, right_speed, front_seed):
-    motor_back_left.setVelocity(left_speed)
-    motor_back_right.setVelocity(right_speed)
+    motor_back.setVelocity(left_speed)
+    motor_middle.setVelocity(right_speed)
     motor_front.setVelocity(front_seed)
 
-def add_turn_all_wheels_task(turn_radian, turn_direction = 1, callback=None):
-    """Thêm task để quay tất cả bánh xe"""
-    print(f"Turning all wheels... {turn_radian}")
-    speed = (TURN_WHEEL_SPEED / 2 * 1.5 ) * turn_direction
-
-    motor_front_joint.setVelocity(speed)
-    motor_back_left_joint.setVelocity(speed)
-    motor_back_right_joint.setVelocity(speed)
-
-    # Thêm task để monitor
-    task = MonitorWheelAngleTask(turn_radian, callback)
-    add_task(task)
-
-def turn_body(turn_radian):
-    def start_turn_body():
-        set_velocity(-FORWARD_SLOW_SPEED/10, -FORWARD_SLOW_SPEED/10, FORWARD_SLOW_SPEED/5)
-        current_heading = get_current_robot_heading()
-        print(f"Current heading: {current_heading}")
-        print(f"Target heading: {turn_radian}")
-
-        # Thêm task để monitor body heading
-        task = MonitorBodyHeadingTask(current_heading, turn_radian, None)
-        add_task(task)
-
-    add_turn_all_wheels_task(turn_radian, 1,  start_turn_body)
 
 
 # ====== Hàm đọc sensors ======
@@ -319,41 +309,45 @@ def get_current_robot_heading():
     yaw = round(yaw, 6) + 1.570798
     return math.atan2(math.sin(yaw), math.cos(yaw))
 
-def get_current_robot_front_wheel_in_radiant():
-    value = robot_front_wheel_radian_sensor.getValue()
+def get_current_front_wheel_angel():
+    value = front_steering_angle.getValue()
     value  = (round((value - math.pi) % (2 * math.pi) - math.pi, 2)) * -1
-    # print(f"Getting front wheel radian: {value}")
     return value
 
-def get_current_robot_back_left_wheel_in_radiant():
-    value = robot_back_left_wheel_radian_sensor.getValue()
+def get_current_back_wheel_angel():
+    value = back_steering_angle.getValue()
     value  = (round((value  - math.pi) % (2 * math.pi) - math.pi, 2)) * -1
-    # print(f"Getting back left wheel radian: {value}")
     return value
 
-def get_current_robot_back_right_wheel_in_radiant():
-    value = robot_back_right_wheel_radian_sensor.getValue()
+def get_current_middle_wheel_angel():
+    value = middle_steering_angle.getValue()
     value  = (round((value  - math.pi) % (2 * math.pi) - math.pi, 2)) * -1
-    # print(f"Getting back right wheel radian: {value}")
     return value
 
 # ==== OPC UA Server ====
 class RobotCommandServer:
     def __init__(self, endpoint="opc.tcp://0.0.0.0:4840/freeopcua/server/"):
-        self.allWheelSpeedSub = None
-        self.bodyTurnSub = None
-        self.frontWheelSpeedSub = None
-        self.backWheelsSpeedSub = None
-        self.turnAllWheelsSub = None
+        self.frontSpeedSub = None
+        self.middleSpeedSub = None
+        self.backSpeedSub = None
+
+        self.frontSteeringSub = None
+        self.middleSteeringSub = None
+        self.backSteeringSub = None
+
+        self.front_speed_var = None
+        self.middle_speed_var = None
+        self.back_speed_var = None
+
+        self.front_steering_var = None
+        self.middle_steering_var = None
+        self.back_steering_var = None
+
         self.server = Server()
         self.endpoint = endpoint
         self.forward_var = None
         self.namespace_idx = None
-        self.all_wheel_speed_var = None
-        self.body_turn_var = None
-        self.front_wheel_speed_var = None
-        self.back_wheels_speed_var = None
-        self.turn_all_wheels_var = None
+
         self.is_monitoring = False
         self.monitor_thread = None
         self.last_processed_command = None  # Để tránh xử lý command trùng lặp
@@ -371,112 +365,142 @@ class RobotCommandServer:
         robot_device = await objects.add_object(self.namespace_idx, "RobotController")
 
         # Biến tốc độ đi thẳng
-        self.all_wheel_speed_var = await robot_device.add_variable(
+        self.front_speed_var = await robot_device.add_variable(
             self.namespace_idx,
-            "AllWheelSpeed",
+            "FrontMotorSpeed",
             ua.Variant(0.0, ua.VariantType.Float)
         )
-        await self.all_wheel_speed_var.set_writable(True)
-        print(f"AllWheelSpeed NodeId: NamespaceId { self.all_wheel_speed_var.nodeid.NamespaceIndex}, NodeId {self.all_wheel_speed_var.nodeid.Identifier}", )
+        await self.front_speed_var.set_writable(True)
+        print(f"FrontMotorSpeed NodeId: NamespaceId { self.front_speed_var.nodeid.NamespaceIndex}, NodeId {self.front_speed_var.nodeid.Identifier}", )
 
-        # Biến điều khiển quay 3 bánh
-        self.body_turn_var = await robot_device.add_variable(
+        # Biến tốc độ đi thẳng
+        self.back_speed_var = await robot_device.add_variable(
             self.namespace_idx,
-            "BodyTurn",
+            "BackMotorSpeed",
             ua.Variant(0.0, ua.VariantType.Float)
         )
-        await self.body_turn_var.set_writable(True)
-        print(f"BodyTurn NodeId: NamespaceId { self.body_turn_var.nodeid.NamespaceIndex}, NodeId {self.body_turn_var.nodeid.Identifier}", )
+        await self.back_speed_var.set_writable(True)
+        print(f"BackMotorSpeed NodeId: NamespaceId { self.back_speed_var.nodeid.NamespaceIndex}, NodeId {self.back_speed_var.nodeid.Identifier}", )
 
-        self.front_wheel_speed_var = await robot_device.add_variable(
+        # Biến tốc độ đi thẳng
+        self.middle_speed_var = await robot_device.add_variable(
             self.namespace_idx,
-            "FrontWheelSpeed",
+            "MiddleMotorSpeed",
             ua.Variant(0.0, ua.VariantType.Float)
         )
-        await self.front_wheel_speed_var.set_writable(True)
-        print(f"FrontWheelSpeed NodeId: NamespaceId { self.front_wheel_speed_var.nodeid.NamespaceIndex}, NodeId {self.front_wheel_speed_var.nodeid.Identifier}", )
+        await self.middle_speed_var.set_writable(True)
+        print(f"MiddleMotorSpeed NodeId: NamespaceId { self.middle_speed_var.nodeid.NamespaceIndex}, NodeId {self.middle_speed_var.nodeid.Identifier}", )
 
-        self.back_wheels_speed_var = await robot_device.add_variable(
+        # Biến điều khiển quay bánh
+        self.front_steering_var = await robot_device.add_variable(
             self.namespace_idx,
-            "FrontWheelSpeed",
+            "FrontSteering",
             ua.Variant(0.0, ua.VariantType.Float)
         )
-        await self.back_wheels_speed_var.set_writable(True)
-        print(f"FrontWheelSpeed NodeId: NamespaceId { self.back_wheels_speed_var.nodeid.NamespaceIndex}, NodeId {self.back_wheels_speed_var.nodeid.Identifier}", )
+        await self.front_steering_var.set_writable(True)
+        print(f"FrontSteering NodeId: NamespaceId { self.front_steering_var.nodeid.NamespaceIndex}, NodeId {self.front_steering_var.nodeid.Identifier}", )
 
-        self.turn_all_wheels_var = await robot_device.add_variable(
+        # Biến điều khiển quay bánh
+        self.back_steering_var = await robot_device.add_variable(
             self.namespace_idx,
-            "TurnAllWheels",
+            "BackSteering",
             ua.Variant(0.0, ua.VariantType.Float)
         )
-        await self.turn_all_wheels_var.set_writable(True)
-        print(f"TurnAllWheels NodeId: NamespaceId { self.turn_all_wheels_var.nodeid.NamespaceIndex}, NodeId {self.turn_all_wheels_var.nodeid.Identifier}", )
+        await self.back_steering_var.set_writable(True)
+        print(f"BackSteering NodeId: NamespaceId { self.back_steering_var.nodeid.NamespaceIndex}, NodeId {self.back_steering_var.nodeid.Identifier}", )
 
+        # Biến điều khiển quay bánh
+        self.middle_steering_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "MiddleSteering",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.middle_steering_var.set_writable(True)
+        print(f"MiddleSteering NodeId: NamespaceId { self.middle_steering_var.nodeid.NamespaceIndex}, NodeId {self.middle_steering_var.nodeid.Identifier}", )
 
     async def setup_internal_subscription(self):
-        class AllWheelSpeedHandler:
+        class FrontSpeedHandler:
             @staticmethod
             def datachange_notification(node, val, data):
-                print("🚨 ALL WHEEL SPEEDS CHANGED")
-                print("NodeId:", node.nodeid)
-                print("Value:", val)
-                set_velocity(val*0.93, val*0.93, val)
-
-        class BodyTurnHandler:
-            @staticmethod
-            def datachange_notification(node, val, data):
-                print("🚨 BODY TURN CHANGED")
-                print("NodeId:", node.nodeid)
-                print("Value:", val)
-                if val is not None and val != 0.0:
-                    radiant = val / 180 * math.pi
-                    turn_body(radiant)
-
-        class FrontWheelSpeedHandler:
-            @staticmethod
-            def datachange_notification(node, val, data):
-                print("🚨 FRONT WHEEL SPEED CHANGED")
+                print("🚨 FRONT SPEEDS CHANGED")
                 print("NodeId:", node.nodeid)
                 print("Value:", val)
                 motor_front.setVelocity(val)
 
-        class BackWheelsSpeedHandler:
+        class BackSpeedHandler:
             @staticmethod
             def datachange_notification(node, val, data):
-                print("🚨 BACK WHEELS SPEED CHANGED")
+                print("🚨BACK SPEEDS CHANGED")
                 print("NodeId:", node.nodeid)
                 print("Value:", val)
-                motor_back_right.setVelocity(val)
-                motor_back_left.setVelocity(val)
+                motor_back.setVelocity(val)
 
-
-        class TurnAllWheelsHandler:
+        class MiddleSpeedHandler:
             @staticmethod
             def datachange_notification(node, val, data):
-                print("🚨 TURN ALL WHEELS CHANGED")
+                print("🚨 MIDDLE SPEEDS CHANGED")
                 print("NodeId:", node.nodeid)
                 print("Value:", val)
-                if val is not None and val != 0.0:
-                    radiant = val / 180 * math.pi
-                    add_turn_all_wheels_task(radiant, 1, None)
+                motor_middle.setVelocity(val)
 
-        all_wheel_speed_handler = AllWheelSpeedHandler()
-        body_turn_handler = BodyTurnHandler()
-        front_wheel_speed_handler = FrontWheelSpeedHandler()
-        back_wheels_speed_handler = BackWheelsSpeedHandler()
-        turn_all_wheels_handler = TurnAllWheelsHandler()
+        class FrontSteeringHandler:
+            @staticmethod
+            def datachange_notification(node, val, data):
+                print("🚨 FRONT STEERING CHANGED")
+                print("NodeId:", node.nodeid)
+                print("Value:", val)
+                current = get_current_front_wheel_angel()
+                target = val/180 * math.pi
+                speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
+                motor_steering_front.setVelocity(speed)
+                add_task(FrontMonitorWheelAngleTask(target))
 
-        self.allWheelSpeedSub = await self.server.create_subscription(0, all_wheel_speed_handler)
-        self.bodyTurnSub = await self.server.create_subscription(0, body_turn_handler)
-        self.frontWheelSpeedSub = await self.server.create_subscription(0, front_wheel_speed_handler)
-        self.backWheelsSpeedSub = await self.server.create_subscription(0, back_wheels_speed_handler)
-        self.turnAllWheelsSub = await self.server.create_subscription(0, turn_all_wheels_handler)
+        class BackSteeringHandler:
+            @staticmethod
+            def datachange_notification(node, val, data):
+                print("🚨 BACK STEERING CHANGED")
+                print("NodeId:", node.nodeid)
+                print("Value:", val)
+                current = get_current_back_wheel_angel()
+                target = val/180 * math.pi
+                speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
+                motor_steering_back.setVelocity(speed)
+                add_task(BackMonitorWheelAngleTask(target))
 
-        await self.allWheelSpeedSub.subscribe_data_change(self.all_wheel_speed_var)
-        await self.bodyTurnSub.subscribe_data_change(self.body_turn_var)
-        await self.frontWheelSpeedSub.subscribe_data_change(self.front_wheel_speed_var)
-        await self.backWheelsSpeedSub.subscribe_data_change(self.back_wheels_speed_var)
-        await self.turnAllWheelsSub.subscribe_data_change(self.turn_all_wheels_var)
+
+        class MiddleSteeringHandler:
+            @staticmethod
+            def datachange_notification(node, val, data):
+                print("🚨 MIDDLE STEERING CHANGED")
+                print("NodeId:", node.nodeid)
+                print("Value:", val)
+                current = get_current_middle_wheel_angel()
+                target = val/180 * math.pi
+                speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
+                motor_steering_middle.setVelocity(speed)
+                add_task(MiddleMonitorWheelAngleTask(target))
+
+        front_speed_handler = FrontSpeedHandler()
+        middle_speed_handler = MiddleSpeedHandler()
+        back_speed_handler = BackSpeedHandler()
+        front_steering_handler = FrontSteeringHandler()
+        middle_steering_handler = MiddleSteeringHandler()
+        back_steering_handler = BackSteeringHandler()
+
+        self.frontSpeedSub = await self.server.create_subscription(0, front_speed_handler)
+        self.middleSpeedSub = await self.server.create_subscription(0, middle_speed_handler)
+        self.backSpeedSub = await self.server.create_subscription(0, back_speed_handler)
+        self.frontSteeringSub = await self.server.create_subscription(0, front_steering_handler)
+        self.middleSteeringSub = await self.server.create_subscription(0, middle_steering_handler)
+        self.backSteeringSub = await self.server.create_subscription(0, back_steering_handler)
+
+        await self.frontSpeedSub.subscribe_data_change(self.front_speed_var)
+        await self.backSpeedSub.subscribe_data_change(self.back_speed_var)
+        await self.middleSpeedSub.subscribe_data_change(self.middle_speed_var)
+        await self.frontSteeringSub.subscribe_data_change(self.front_steering_var)
+        await self.backSteeringSub.subscribe_data_change(self.back_steering_var)
+        await self.middleSteeringSub.subscribe_data_change(self.middle_steering_var)
+
 
     async def run(self):
         await self.setup_server()
@@ -486,6 +510,21 @@ class RobotCommandServer:
         async with self.server:
             while True:
                 await asyncio.sleep(100)
+
+def normalize_angle_rad(angle):
+    """
+    Chuẩn hoá góc về [-pi, pi)
+    """
+    return (angle + math.pi) % (2 * math.pi) - math.pi
+
+
+def shortest_rotation_direction_rad(current, target):
+    current = normalize_angle_rad(current)
+    target = normalize_angle_rad(target)
+    delta = normalize_angle_rad(target - current)
+    if delta == 0:
+        return 0
+    return -1 if delta < 0 else 1
 
 
 # ==== API Server ====

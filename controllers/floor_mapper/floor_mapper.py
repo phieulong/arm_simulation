@@ -15,6 +15,7 @@ from redis import Connection
 # --- Cấu hình bản đồ ---
 API_URL = "http://localhost:6060/map"
 
+last_redis_publish = 0
 REDIS_PUBLISH_INTERVAL = (0.1, 0.3)
 start, end = REDIS_PUBLISH_INTERVAL
 random_delay = random.uniform(start, end)
@@ -35,12 +36,12 @@ class IPv4Connection(Connection):
 # Redis client
 pool = redis.ConnectionPool(
     connection_class=IPv4Connection,
-    host='192.168.0.71',
-    port=26379,
+    host='localhost',
+    port=6379,
     db=0
 )
 
-redis_client = redis.Redis(host='192.168.0.71', port=26379, db=0, connection_pool=pool)
+redis_client = redis.Redis(host='localhost', port=6379, db=0, connection_pool=pool)
 
 # Flask app
 app = Flask(__name__)
@@ -115,6 +116,9 @@ def fetch_current_robot_api(robot_id=0, timeout=2):
     return {}
 
 def publish_robot_and_obstacles(map_robot_ids, supervisor = root_supervisor):
+    global last_redis_publish, random_delay
+
+    now = time.time()
     """Lấy thông tin arena và obstacles"""
     try:
         # supervisor.simulationResetPhysics()
@@ -171,11 +175,11 @@ def publish_robot_and_obstacles(map_robot_ids, supervisor = root_supervisor):
                 print(f"Error processing node {i}: {e}")
                 continue
         message = {"april_tags": [robot_0,
-                                  # robot_1,
-                                  # robot_2,
-                                  # robot_3
+                                  # robot_1, robot_2, robot_3
                                   ], "objects": obstacles}
         redis_client.xadd("robot_obstacle_pose_stream", {"data": json.dumps(message)})
+        last_redis_publish = now
+        sleep(0.05)
     except Exception as e:
         print(f"Error publishing apriltags and robots: {e}")
         return None
@@ -424,8 +428,8 @@ def create_postgres_connection():
             dbname="arm",
             user="postgres",
             password="postgres",  # Replace with the actual password or use environment variables
-            host="192.168.0.71",
-            port=25432
+            host="localhost",
+            port=5432
         )
         print("Connection to PostgreSQL database established successfully.")
         return connection
@@ -1916,52 +1920,62 @@ def get_robot_ids_ascending():
         if 'connection' in locals() and connection:
             connection.close()
 
-timestep = int(root_supervisor.getBasicTimeStep())
 # --- Main Logic ---
-import sys
+if __name__ == "__main__":
+    import sys
 
-print("Webots Python:", sys.executable)
+    print("Webots Python:", sys.executable)
     # Khởi tạo cache ban đầu
-print("Initializing map cache...")
-initial_map = get_cached_map()
-if initial_map:
-    print(f"Map initialized with {len(initial_map['objects'])} obstacles")
-else:
-    print("Warning: Failed to initialize map")
+    print("Initializing map cache...")
+    initial_map = get_cached_map()
+    if initial_map:
+        print(f"Map initialized with {len(initial_map['objects'])} obstacles")
+    else:
+        print("Warning: Failed to initialize map")
 
     # Chạy Flask server trong thread riêng
-flask_thread = threading.Thread(target=run_flask, daemon=True)
-flask_thread.start()
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
 
-print("Flask server started, beginning Webots simulation loop...")
+    print("Flask server started, beginning Webots simulation loop...")
 
+    # Webots simulation loop được tối ưu
+    timestep = int(root_supervisor.getBasicTimeStep())
+    last_cache_refresh = 0
+    loop_count = 0
+    last_publish = 0
 
-# track time for periodic actions
-insert_tasks()
-robot_ids = get_robot_ids_ascending()
-print(f"Robot IDs: {robot_ids}")
-robot_map_ids = {
-    "0": robot_ids[0],
-    "1": robot_ids[1],
-    "2": robot_ids[2],
-    "3": robot_ids[3],
-}
+    # track time for periodic actions
+    last_publish_time = time.time()
+    insert_tasks()
+    robot_ids = get_robot_ids_ascending()
+    print(f"Robot IDs: {robot_ids}")
+    robot_map_ids = {
+        "0": robot_ids[0],
+        # "1": robot_ids[1],
+        # "2": robot_ids[2],
+        # "3": robot_ids[3],
+    }
 
-publisher_thread = None
-while root_supervisor.step(timestep) != -1:
-    # compute current time at start of iteration
-    # publish_robot_and_obstacles(robot_map_ids, root_supervisor)
-    rotate_near_manhole_objects(
-        supervisor=root_supervisor,
-        robot_def="Pioneer_3-AT",
-        threshold=0.5,
-        angle_range=(5, 10)
-    )
-    if not publisher_thread or not publisher_thread.is_alive():
-        publisher_thread = threading.Thread(
-            target=publish_robot_and_obstacles,
-            args=(robot_map_ids, root_supervisor),
-            daemon=True,
+    publisher_thread = None
+    while root_supervisor.step(timestep) != -1:
+        # compute current time at start of iteration
+        now = time.time()
+
+        rotate_near_manhole_objects(
+            supervisor=root_supervisor,
+            robot_def="Pioneer_3-AT",
+            threshold=0.5,
+            angle_range=(5, 10)
         )
-        publisher_thread.start()
+        if not publisher_thread or not publisher_thread.is_alive():
+            publisher_thread = threading.Thread(
+                target=publish_robot_and_obstacles,
+                args=(robot_map_ids, root_supervisor),
+                daemon=True,
+            )
+            publisher_thread.start()
+        loop_count += 1
+
+    print("Webots simulation ended")
 
