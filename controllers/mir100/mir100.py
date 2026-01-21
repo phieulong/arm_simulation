@@ -66,9 +66,10 @@ def analyze_apriltag_offset(image):
         Giá trị này KHÔNG THAY ĐỔI khi robot di chuyển tịnh tiến (nếu không lệch góc)
 
     yaw_deg : float | None
-        Góc xoay của AprilTag so với camera (độ)
-        0° = AprilTag vuông góc với camera
-        (+) xoay ngược chiều kim đồng hồ
+        Góc giữa mặt phẳng AprilTag và mặt phẳng camera (quay quanh trục Z - vertical)
+        0° = AprilTag song song với camera
+        ±90° = AprilTag vuông góc với camera
+        Được tính từ rotation matrix của pose estimation
 
     distance_cm : float | None
         Khoảng cách (chiều sâu) từ camera đến AprilTag (cm)
@@ -82,12 +83,26 @@ def analyze_apriltag_offset(image):
         gray = image
     h, w = gray.shape
 
-    # ---- 2. Detect AprilTag ----
-    detections = _apriltag_detector.detect(gray)
+    # ---- 2. Camera parameters cho pose estimation ----
+    camera_params = [
+        CAMERA_FOCAL_LENGTH,  # fx
+        CAMERA_FOCAL_LENGTH,  # fy
+        CAMERA_WIDTH / 2.0,   # cx
+        CAMERA_HEIGHT / 2.0   # cy
+    ]
+
+    # ---- 3. Detect AprilTag với pose estimation ----
+    detections = _apriltag_detector.detect(
+        gray,
+        estimate_tag_pose=True,
+        camera_params=camera_params,
+        tag_size=APRILTAG_SIZE_CM / 100.0  # Chuyển sang mét
+    )
+
     if len(detections) == 0:
         return None, None, None
 
-    # ---- 3. Tính khoảng cách (chiều sâu) từ depth_camera ----
+    # ---- 4. Tính khoảng cách (chiều sâu) từ depth_camera ----
     width = range_finder.getWidth()
     height = range_finder.getHeight()
     range_image = range_finder.getRangeImage()
@@ -97,22 +112,50 @@ def analyze_apriltag_offset(image):
     distance_m = depth_2d[cy, cx]
     distance_cm = distance_m * 100
 
-    # ---- 4. Lấy tag đầu tiên (hoặc chọn theo ID nếu cần) ----
+    # ---- 5. Lấy tag đầu tiên (hoặc chọn theo ID nếu cần) ----
     tag = detections[0]
-    corners = tag.corners
-    cx, cy = tag.center
-    offset_px = cx - (w / 2.0)
+    center_x, center_y = tag.center
+    offset_px = center_x - (w / 2.0)
 
-    # ---- 5. Chuyển offset từ pixel sang cm ----
+    # ---- 6. Chuyển offset từ pixel sang cm ----
     # Sử dụng similar triangles: offset_cm / distance_cm = offset_px / focal_length
     lateral_offset_cm = (offset_px * distance_cm) / CAMERA_FOCAL_LENGTH
 
-    # ---- 6. Lệch góc (yaw) của AprilTag ----
-    # vector cạnh trên của tag: corner 0 -> corner 1
-    v = corners[1] - corners[0]
-    yaw_rad = np.arctan2(v[1], v[0])
-    yaw_deg = np.degrees(yaw_rad)
-    print(lateral_offset_cm, yaw_deg, distance_cm)
+    # ---- 7. Tính góc giữa mặt phẳng AprilTag và mặt phẳng camera ----
+    if tag.pose_R is not None:
+        # pose_R là rotation matrix 3x3 (tag frame -> camera frame)
+        R = np.array(tag.pose_R)
+
+        # Normal vector của AprilTag trong tag frame là [0, 0, 1]
+        # Sau transform sang camera frame: normal_cam = R @ [0, 0, 1] = R[:, 2]
+        normal_in_cam = R[:, 2]
+
+        # Góc giữa normal vector và trục Z của camera (trục nhìn thẳng)
+        # cos(angle) = normal_z / |normal| = normal_z (vì |normal| = 1 trong rotation matrix)
+        # Góc = arccos(normal_z)
+        normal_z = normal_in_cam[2]
+
+        # Clamp để tránh lỗi numerical
+        normal_z = np.clip(normal_z, -1.0, 1.0)
+
+        # Góc giữa 2 mặt phẳng (0° = song song, 90° = vuông góc)
+        angle_rad = np.arccos(normal_z)
+        yaw_deg = np.degrees(angle_rad)
+
+        # Để biết AprilTag nghiêng sang trái hay phải, dùng normal_x
+        # Nếu muốn giá trị có dấu:
+        # - Dương: nghiêng sang phải
+        # - Âm: nghiêng sang trái
+        if normal_in_cam[0] < 0:
+            yaw_deg = -yaw_deg
+
+        print(f"DEBUG Normal in camera frame: [{normal_in_cam[0]:.4f}, {normal_in_cam[1]:.4f}, {normal_in_cam[2]:.4f}]")
+        print(f"DEBUG Angle between planes: {yaw_deg:.2f}°")
+    else:
+        # Fallback nếu pose estimation không thành công
+        yaw_deg = 0.0
+
+    print(f"RESULT: lateral={lateral_offset_cm:.2f}cm, yaw={yaw_deg:.2f}°, distance={distance_cm:.2f}cm")
 
     return lateral_offset_cm, yaw_deg, distance_cm
 
