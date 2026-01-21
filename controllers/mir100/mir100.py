@@ -13,7 +13,7 @@ import redis
 import json
 
 # ==== Redis Client ====
-redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+redis_client = redis.Redis(host="192.168.0.71", port=26379, db=0, decode_responses=True)
 REDIS_APRILTAG_CHANNEL = "apriltag_detection_194"
 REDIS_APRILTAG_KEY = "apriltag_latest"
 
@@ -343,6 +343,11 @@ class RobotCommandServer:
         self.middle_steering_var = None
         self.back_steering_var = None
 
+        # Biến để đọc góc hiện tại của bánh xe (read-only)
+        self.front_angle_sensor_var = None
+        self.middle_angle_sensor_var = None
+        self.back_angle_sensor_var = None
+
         self.server = Server()
         self.endpoint = endpoint
         self.forward_var = None
@@ -351,6 +356,7 @@ class RobotCommandServer:
         self.is_monitoring = False
         self.monitor_thread = None
         self.last_processed_command = None  # Để tránh xử lý command trùng lặp
+        self.loop = None  # Lưu event loop để gọi async functions từ thread khác
 
     async def setup_server(self):
         """Initialize server configuration"""
@@ -418,6 +424,31 @@ class RobotCommandServer:
         await self.middle_steering_var.set_writable(True)
         print(f"MiddleSteering NodeId: NamespaceId { self.middle_steering_var.nodeid.NamespaceIndex}, NodeId {self.middle_steering_var.nodeid.Identifier}", )
 
+        # Biến đọc góc hiện tại của bánh xe (read-only cho client)
+        self.front_angle_sensor_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "FrontAngleSensor",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.front_angle_sensor_var.set_writable(False)
+        print(f"FrontAngleSensor NodeId: NamespaceId {self.front_angle_sensor_var.nodeid.NamespaceIndex}, NodeId {self.front_angle_sensor_var.nodeid.Identifier}")
+
+        self.back_angle_sensor_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "BackAngleSensor",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.back_angle_sensor_var.set_writable(False)
+        print(f"BackAngleSensor NodeId: NamespaceId {self.back_angle_sensor_var.nodeid.NamespaceIndex}, NodeId {self.back_angle_sensor_var.nodeid.Identifier}")
+
+        self.middle_angle_sensor_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "MiddleAngleSensor",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.middle_angle_sensor_var.set_writable(False)
+        print(f"MiddleAngleSensor NodeId: NamespaceId {self.middle_angle_sensor_var.nodeid.NamespaceIndex}, NodeId {self.middle_angle_sensor_var.nodeid.Identifier}")
+
     async def setup_internal_subscription(self):
         class FrontSpeedHandler:
             @staticmethod
@@ -449,11 +480,9 @@ class RobotCommandServer:
                 print("🚨 FRONT STEERING CHANGED")
                 print("NodeId:", node.nodeid)
                 print("Value:", val)
-                current = get_current_front_wheel_angel()
-                target = val/180 * math.pi
-                speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
-                motor_steering_front.setVelocity(speed)
-                add_task(FrontMonitorWheelAngleTask(target))
+                # current = get_current_front_wheel_angel()
+                # target = val/180 * math.pi
+                motor_steering_front.setVelocity(val)
 
         class BackSteeringHandler:
             @staticmethod
@@ -461,11 +490,10 @@ class RobotCommandServer:
                 print("🚨 BACK STEERING CHANGED")
                 print("NodeId:", node.nodeid)
                 print("Value:", val)
-                current = get_current_back_wheel_angel()
-                target = val/180 * math.pi
-                speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
-                motor_steering_back.setVelocity(speed)
-                add_task(BackMonitorWheelAngleTask(target))
+                # current = get_current_back_wheel_angel()
+                # target = val/180 * math.pi
+                # speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
+                motor_steering_back.setVelocity(val)
 
 
         class MiddleSteeringHandler:
@@ -474,11 +502,10 @@ class RobotCommandServer:
                 print("🚨 MIDDLE STEERING CHANGED")
                 print("NodeId:", node.nodeid)
                 print("Value:", val)
-                current = get_current_middle_wheel_angel()
-                target = val/180 * math.pi
-                speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
-                motor_steering_middle.setVelocity(speed)
-                add_task(MiddleMonitorWheelAngleTask(target))
+                # current = get_current_middle_wheel_angel()
+                # target = val/180 * math.pi
+                # speed = shortest_rotation_direction_rad(current, target) * TURN_WHEEL_SPEED
+                motor_steering_middle.setVelocity(val)
 
         front_speed_handler = FrontSpeedHandler()
         middle_speed_handler = MiddleSpeedHandler()
@@ -502,7 +529,31 @@ class RobotCommandServer:
         await self.middleSteeringSub.subscribe_data_change(self.middle_steering_var)
 
 
+    async def update_wheel_angles(self):
+        """Cập nhật giá trị góc bánh xe từ sensors vào OPC UA variables"""
+        try:
+            front_angle = get_current_front_wheel_angel()
+            back_angle = get_current_back_wheel_angel()
+            middle_angle = get_current_middle_wheel_angel()
+
+            # Chuyển từ radian sang độ để dễ đọc
+            front_angle_deg = front_angle * 180 / math.pi
+            back_angle_deg = back_angle * 180 / math.pi
+            middle_angle_deg = middle_angle * 180 / math.pi
+
+            await self.front_angle_sensor_var.write_value(ua.Variant(front_angle_deg, ua.VariantType.Float))
+            await self.back_angle_sensor_var.write_value(ua.Variant(back_angle_deg, ua.VariantType.Float))
+            await self.middle_angle_sensor_var.write_value(ua.Variant(middle_angle_deg, ua.VariantType.Float))
+        except Exception as e:
+            print(f"Error updating wheel angles: {e}")
+
+    def update_wheel_angles_sync(self):
+        """Wrapper để gọi update_wheel_angles từ thread khác (main loop)"""
+        if self.loop and self.loop.is_running():
+            asyncio.run_coroutine_threadsafe(self.update_wheel_angles(), self.loop)
+
     async def run(self):
+        self.loop = asyncio.get_event_loop()  # Lưu event loop
         await self.setup_server()
         await self.setup_internal_subscription()
 
@@ -576,12 +627,15 @@ camera_height = camera.getHeight()
 
 # Counter để giảm tần suất xử lý apriltag (không cần mỗi frame)
 apriltag_check_counter = 0
-APRILTAG_CHECK_INTERVAL = 10  # Kiểm tra mỗi 10 timesteps
+APRILTAG_CHECK_INTERVAL = 0  # Kiểm tra mỗi 10 timesteps
 
 # 🔥 Main loop - Xử lý tất cả tasks với robot.step thay vì time.sleep
 while robot.step(time_step) != -1:
     # Xử lý các monitoring tasks trong mỗi timestep
     process_tasks()
+
+    # Cập nhật giá trị góc bánh xe vào OPC UA variables
+    server.update_wheel_angles_sync()
 
     # Xử lý AprilTag detection từ camera
     apriltag_check_counter += 1
