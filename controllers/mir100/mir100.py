@@ -423,15 +423,6 @@ class RobotCommandServer:
         print(f"FrontMotorSpeed NodeId: NamespaceId { self.front_speed_var.nodeid.NamespaceIndex}, NodeId {self.front_speed_var.nodeid.Identifier}", )
 
         # Biến tốc độ đi thẳng
-        self.back_speed_var = await robot_device.add_variable(
-            self.namespace_idx,
-            "BackMotorSpeed",
-            ua.Variant(0.0, ua.VariantType.Float)
-        )
-        await self.back_speed_var.set_writable(True)
-        print(f"BackMotorSpeed NodeId: NamespaceId { self.back_speed_var.nodeid.NamespaceIndex}, NodeId {self.back_speed_var.nodeid.Identifier}", )
-
-        # Biến tốc độ đi thẳng
         self.middle_speed_var = await robot_device.add_variable(
             self.namespace_idx,
             "MiddleMotorSpeed",
@@ -439,6 +430,15 @@ class RobotCommandServer:
         )
         await self.middle_speed_var.set_writable(True)
         print(f"MiddleMotorSpeed NodeId: NamespaceId { self.middle_speed_var.nodeid.NamespaceIndex}, NodeId {self.middle_speed_var.nodeid.Identifier}", )
+
+        # Biến tốc độ đi thẳng
+        self.back_speed_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "BackMotorSpeed",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.back_speed_var.set_writable(True)
+        print(f"BackMotorSpeed NodeId: NamespaceId {self.back_speed_var.nodeid.NamespaceIndex}, NodeId {self.back_speed_var.nodeid.Identifier}", )
 
         # Biến điều khiển quay bánh
         self.front_steering_var = await robot_device.add_variable(
@@ -450,15 +450,6 @@ class RobotCommandServer:
         print(f"FrontSteering NodeId: NamespaceId { self.front_steering_var.nodeid.NamespaceIndex}, NodeId {self.front_steering_var.nodeid.Identifier}", )
 
         # Biến điều khiển quay bánh
-        self.back_steering_var = await robot_device.add_variable(
-            self.namespace_idx,
-            "BackSteering",
-            ua.Variant(0.0, ua.VariantType.Float)
-        )
-        await self.back_steering_var.set_writable(True)
-        print(f"BackSteering NodeId: NamespaceId { self.back_steering_var.nodeid.NamespaceIndex}, NodeId {self.back_steering_var.nodeid.Identifier}", )
-
-        # Biến điều khiển quay bánh
         self.middle_steering_var = await robot_device.add_variable(
             self.namespace_idx,
             "MiddleSteering",
@@ -466,6 +457,16 @@ class RobotCommandServer:
         )
         await self.middle_steering_var.set_writable(True)
         print(f"MiddleSteering NodeId: NamespaceId { self.middle_steering_var.nodeid.NamespaceIndex}, NodeId {self.middle_steering_var.nodeid.Identifier}", )
+
+        # Biến điều khiển quay bánh
+        self.back_steering_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "BackSteering",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.back_steering_var.set_writable(True)
+        print(
+            f"BackSteering NodeId: NamespaceId {self.back_steering_var.nodeid.NamespaceIndex}, NodeId {self.back_steering_var.nodeid.Identifier}", )
 
         # Biến đọc góc hiện tại của bánh xe (read-only cho client)
         self.front_angle_sensor_var = await robot_device.add_variable(
@@ -476,14 +477,6 @@ class RobotCommandServer:
         await self.front_angle_sensor_var.set_writable(False)
         print(f"FrontAngleSensor NodeId: NamespaceId {self.front_angle_sensor_var.nodeid.NamespaceIndex}, NodeId {self.front_angle_sensor_var.nodeid.Identifier}")
 
-        self.back_angle_sensor_var = await robot_device.add_variable(
-            self.namespace_idx,
-            "BackAngleSensor",
-            ua.Variant(0.0, ua.VariantType.Float)
-        )
-        await self.back_angle_sensor_var.set_writable(False)
-        print(f"BackAngleSensor NodeId: NamespaceId {self.back_angle_sensor_var.nodeid.NamespaceIndex}, NodeId {self.back_angle_sensor_var.nodeid.Identifier}")
-
         self.middle_angle_sensor_var = await robot_device.add_variable(
             self.namespace_idx,
             "MiddleAngleSensor",
@@ -491,6 +484,15 @@ class RobotCommandServer:
         )
         await self.middle_angle_sensor_var.set_writable(False)
         print(f"MiddleAngleSensor NodeId: NamespaceId {self.middle_angle_sensor_var.nodeid.NamespaceIndex}, NodeId {self.middle_angle_sensor_var.nodeid.Identifier}")
+
+        self.back_angle_sensor_var = await robot_device.add_variable(
+            self.namespace_idx,
+            "BackAngleSensor",
+            ua.Variant(0.0, ua.VariantType.Float)
+        )
+        await self.back_angle_sensor_var.set_writable(False)
+        print(
+            f"BackAngleSensor NodeId: NamespaceId {self.back_angle_sensor_var.nodeid.NamespaceIndex}, NodeId {self.back_angle_sensor_var.nodeid.Identifier}")
 
     async def setup_internal_subscription(self):
         class FrontSpeedHandler:
@@ -675,7 +677,6 @@ APRILTAG_CHECK_INTERVAL = 0  # Kiểm tra mỗi 10 timesteps
 # 🔥 Main loop - Xử lý tất cả tasks với robot.step thay vì time.sleep
 while robot.step(time_step) != -1:
     # Xử lý các monitoring tasks trong mỗi timestep
-    process_tasks()
 
     # Cập nhật giá trị góc bánh xe vào OPC UA variables
     server.update_wheel_angles_sync()

@@ -1828,6 +1828,45 @@ def execute_robot_task_queries():
             connection.close()
             return {'success': False, 'step_ids': step_ids, 'task_ids': task_ids}
 
+        # Câu SQL thứ 1: INSERT vào bảng steps với RETURNING id
+        sql_4 = """
+                INSERT INTO public.steps (created_at, created_by, updated_at, updated_by, "action", description, \
+                                          name, from_map_object_id, to_map_object_id,
+                                          speed_suggestion, to_map_object_x, to_map_object_y, to_map_object_theta, \
+                                          robot_type_id, accuracy_tolerance, deleted_at,
+                                          deleted_by)
+                VALUES ('2025-12-10 17:37:20.602567', 'robot_194_operator', '2025-12-10 17:37:20.602567', \
+                        'robot_194_operator', 'DOCK',
+                        'Docking tai may nay', \
+                        'Tien hanh Docking', NULL, 2151, 50, 505, 539, 0, 55, 10, NULL, \
+                        NULL) RETURNING id; \
+                """
+
+        print("🔄 Thực hiện câu SQL 4: INSERT vào bảng steps...")
+        cursor.execute(sql_4)
+        docking_step_ids = [row[0] for row in cursor.fetchall()]
+        print(f"✅ Câu SQL 4 hoàn thành. Step IDs: {docking_step_ids}")
+
+        # Câu SQL thứ 5: INSERT vào bảng runtime_tasks_steps sử dụng docking_step_id và task_id đầu tiên đã lấy được
+        # Tạo câu SQL động dựa trên các IDs đã lấy được
+        if task_ids[0] is not None:
+            sql_5_values = [
+                f"({docking_step_ids[0]}, 0, {task_ids[0]}, 'PENDING', NULL, NULL, NULL, NULL, NULL, NULL, NULL)"]
+
+            sql_5 = f"""
+                        INSERT INTO public.runtime_tasks_steps (step_id, step_number, runtime_task_id, status, started_at, completed_at, duration, note, result_code, operator_id,
+                                                                execution_mode)
+                        VALUES {', '.join(sql_5_values)};
+                        """
+
+            print("🔄 Thực hiện câu SQL 4: INSERT vào bảng runtime_tasks_steps...")
+            cursor.execute(sql_5)
+            print(f"✅ Câu SQL 5 hoàn thành với {len(docking_step_ids)} bản ghi")
+        else:
+            connection.rollback()
+            connection.close()
+            return {'success': False, 'step_ids': step_ids, 'task_ids': task_ids}
+
         # Commit tất cả thay đổi
         connection.commit()
         cursor.close()
